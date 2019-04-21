@@ -1,4 +1,4 @@
-module Control.Monad.Z80 where
+module DMG.Monad where
 
 import           Control.Monad.Trans.Writer
 import           Data.Int
@@ -12,8 +12,8 @@ data Register8 = A | B | C | D | E | H | L
 data Register16 = BC | DE | HL
   deriving (Read, Show, Eq)
 
--- | Z80 opcodes
-data Z80 =
+-- | Game Boy Opcodes
+data Opcode =
     LDreg Register8 Register8 -- LD r8,r8
   | LDimm Register8 Word8     -- LD r8, n8
   | LD16imm Register16 Word16 -- LD r16, n16
