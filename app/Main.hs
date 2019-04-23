@@ -6,15 +6,15 @@ import           Control.Monad.Trans.Writer.Lazy
 import qualified Data.Text.Lazy.IO               as T
 import           Data.Word
 import           Lazyboy
+import           Lazyboy.Constants
 import           Lazyboy.IO
 import           Lazyboy.Target.ASM
 
 main :: IO ()
 main = rom >>= T.putStrLn
     where rom = compileROM $ do
-            write 0xC00C 0xEF
-            write 0xC00D 0xAB
-            write 0xC00E 0xAB
+            write wram0 0xEF
+            write wram1 0xAB
 
 -- reads the joypad state into the given register
 -- returns the register written to

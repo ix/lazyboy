@@ -3,13 +3,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Lazyboy.Target.ASM where
 
+import           Control.Monad.Trans.Writer.Lazy
 import           Data.Aeson
-import           Data.Char        (toLower)
-import           Data.Text.Lazy   (Text)
+import           Data.Char                       (toLower)
+import           Data.Text.Lazy                  (Text)
+import qualified Data.Text.Lazy.IO               as T
 import           Lazyboy
 import           Text.Microstache
-import           Text.Printf      (PrintfArg, printf)
-import Control.Monad.Trans.Writer.Lazy
+import           Text.Printf                     (PrintfArg, printf)
 
 -- | Format Ppcodes as Strings
 instance Show Opcode where
@@ -36,4 +37,4 @@ compileROM :: Writer [Opcode] a -> IO Text
 compileROM code = do
     tem <- compileMustacheFile "templates/bare.mustache"
     return $ renderMustache tem $ object [ "body" .= body ]
-    where body = unlines $ map show $ execWriter code
+    where body = map show $ execWriter code

@@ -9,6 +9,5 @@ byte :: Register8 -> Word8 -> Writer [Opcode] ()
 byte reg val = tell [LDimm reg val]
 
 -- | Loads an 8 immediate value into a 16 bit memory address
--- 0xcooc
 write :: Word16 -> Word8 -> Writer [Opcode] ()
 write addr val = tell [LD16imm HL addr, LDHLimm val]
