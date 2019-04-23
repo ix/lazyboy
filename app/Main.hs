@@ -1,20 +1,20 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Main where
 
 import           Control.Monad
 import           Control.Monad.Trans.Writer.Lazy
-import           Lazyboy
-import           Lazyboy.Target.ASM
+import qualified Data.Text.Lazy.IO               as T
 import           Data.Word
+import           Lazyboy
+import           Lazyboy.IO
+import           Lazyboy.Target.ASM
 
 main :: IO ()
-main = putStrLn $ unlines $ map show $ execWriter $ do
-    byte A 0xFF
-    padReg <- readJoypad B
-    tell [LDreg A padReg]
-
--- load an immediate value into a register
-byte :: Register8 -> Word8 -> Writer [Opcode] ()
-byte reg val = tell [LDimm reg val]
+main = rom >>= T.putStrLn
+    where rom = compileROM $ do
+            write 0xC00C 0xEF
+            write 0xC00D 0xAB
+            write 0xC00E 0xAB
 
 -- reads the joypad state into the given register
 -- returns the register written to

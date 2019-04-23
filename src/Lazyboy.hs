@@ -1,8 +1,15 @@
 module Lazyboy where
 
-import           Control.Monad.Trans.Writer
+import           Control.Monad.Trans.Writer.Lazy
 import           Data.Int
 import           Data.Word
+
+-- Rename and re-export Writer types and functions
+-- type Lazyboy a = Writer [Opcode] a
+-- type LazyboyT m a = WriterT [Opcode] m a
+
+-- execLazyboy :: Lazyboy a -> [Opcode]
+-- execLazyboy m = execWriter m
 
 -- | 8 bit registers
 data Register8 = A | B | C | D | E | H | L

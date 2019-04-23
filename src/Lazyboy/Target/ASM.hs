@@ -1,9 +1,17 @@
+-- | This module provides a backend for Lazyboy which produces
+--   Game Boy machine code.
+{-# LANGUAGE OverloadedStrings #-}
 module Lazyboy.Target.ASM where
 
+import           Data.Aeson
+import           Data.Char        (toLower)
+import           Data.Text.Lazy   (Text)
 import           Lazyboy
-import           Data.Char         (toLower)
-import Text.Printf (printf, PrintfArg)
+import           Text.Microstache
+import           Text.Printf      (PrintfArg, printf)
+import Control.Monad.Trans.Writer.Lazy
 
+-- | Format Ppcodes as Strings
 instance Show Opcode where
     show (LDreg r1 r2)     = mconcat ["ld ", format r1, ", ", format r2]
     show (LDimm reg val)   = mconcat ["ld ", format reg, ", ", hexify val]
@@ -11,12 +19,21 @@ instance Show Opcode where
     show (LDHLreg reg)     = "ld [hl], " ++ format reg
     show (LDHLimm val)     = "ld [hl]," ++ lowercase (hexify val)
     show (LDregHL reg)     = "ld " ++ format reg ++ ", [hl]"
-    
+
+-- | Convert a value to a hexadecimal representation
 hexify :: PrintfArg a => a -> String
 hexify = printf "$%X"
 
+-- | Format a value by converting it to a lowercase String
 format :: Show a => a -> String
 format = lowercase . show
 
+-- | Convert a String to lowercase
 lowercase :: String -> String
 lowercase = map toLower
+
+compileROM :: Writer [Opcode] a -> IO Text
+compileROM code = do
+    tem <- compileMustacheFile "templates/bare.mustache"
+    return $ renderMustache tem $ object [ "body" .= body ]
+    where body = unlines $ map show $ execWriter code
