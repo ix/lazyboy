@@ -2,8 +2,8 @@ module Main where
 
 import           Control.Monad
 import           Control.Monad.Trans.Writer.Lazy
-import           DMG.Monad
-import           DMG.Monad.Target.ASM
+import           Lazyboy
+import           Lazyboy.Target.ASM
 import           Data.Word
 
 main :: IO ()

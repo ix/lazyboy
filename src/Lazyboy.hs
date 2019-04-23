@@ -1,4 +1,4 @@
-module DMG.Monad where
+module Lazyboy where
 
 import           Control.Monad.Trans.Writer
 import           Data.Int
@@ -12,7 +12,7 @@ data Register8 = A | B | C | D | E | H | L
 data Register16 = BC | DE | HL
   deriving (Read, Show, Eq)
 
--- | Game Boy Opcodes
+-- | GB Opcodes
 data Opcode =
     LDreg Register8 Register8 -- LD r8,r8
   | LDimm Register8 Word8     -- LD r8, n8

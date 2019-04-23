@@ -1,6 +1,6 @@
-module DMG.Monad.Target.ASM where
+module Lazyboy.Target.ASM where
 
-import           DMG.Monad
+import           Lazyboy
 import           Data.Char         (toLower)
 import Text.Printf (printf, PrintfArg)
 

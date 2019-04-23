@@ -1,10 +1,10 @@
-name:                dmg
+name:                lazyboy
 version:             0.1.0.0
-github:              "githubuser/dmg"
+github:              "ralsei/lazyboy"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2018 Author name here"
+author:              "Rose"
+maintainer:          "rose@lain.org.uk"
+copyright:           "2018 Rose"
 
 extra-source-files:
 - README.md
@@ -17,7 +17,7 @@ extra-source-files:
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/dmg#readme>
+description:         Please see the README on GitHub at <https://github.com/ralsei/lazyboy#readme>
 
 dependencies:
 - base >= 4.7 && < 5
@@ -27,7 +27,7 @@ library:
   source-dirs: src
 
 executables:
-  dmg-exe:
+  lazyboy:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -35,10 +35,10 @@ executables:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - dmg
+    - lazyboy
 
 tests:
-  dmg-test:
+  lazyboy-test:
     main:                Spec.hs
     source-dirs:         test
     ghc-options:
@@ -46,4 +46,4 @@ tests:
     - -rtsopts
     - -with-rtsopts=-N
     dependencies:
-    - dmg
+    - lazyboy 
