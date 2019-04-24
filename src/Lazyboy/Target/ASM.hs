@@ -1,5 +1,16 @@
--- | This module provides a backend for Lazyboy which produces
---   Game Boy machine code.
+{-|
+    Module      : Lazyboy.Target.ASM 
+    Description : ASM backend for Lazyboy
+    Copyright   : (c) Rose 2019
+    License     : BSD3
+    Maintainer  : rose@lain.org.uk
+    Stability   : experimental
+    Portability : POSIX
+
+    This module provides a backend to format opcodes as ASM and 
+    produce assembly files which are then buildable into ROMs (with RGBDS).
+-}
+
 {-# LANGUAGE OverloadedStrings #-}
 module Lazyboy.Target.ASM where
 
@@ -12,7 +23,7 @@ import           Lazyboy
 import           Text.Microstache
 import           Text.Printf                     (PrintfArg, printf)
 
--- | Format Ppcodes as Strings
+-- | Format Opcodes as Strings
 instance Show Opcode where
     show (LDreg r1 r2)     = mconcat ["ld ", format r1, ", ", format r2]
     show (LDimm reg val)   = mconcat ["ld ", format reg, ", ", hexify val]
