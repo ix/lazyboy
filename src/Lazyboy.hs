@@ -16,7 +16,7 @@ data Register8 = A | B | C | D | E | H | L
   deriving (Read, Show, Eq)
 
 -- | 16 bit registers
-data Register16 = BC | DE | HL
+data Register16 = BC | DE | HL | AF | SP | PC 
   deriving (Read, Show, Eq)
 
 -- | GB Opcodes
@@ -29,29 +29,20 @@ data Opcode =
   | LDABC                    -- load the value8 stored in the address in BC into A
   | LDADE                    -- load the value8 stored in the address in DE into A
   | LDAnn Word16             -- load the value8 stored in the value16 address into A
-  | LDBCA                    -- load the value8 stored in A into the address in BC 
+  | LDBCA                    -- load the value8 stored in A into the address in BC
   | LDDEA                    -- load the value8 stored in A into the address in DE
-  | LDnnA                    -- load the value8 stored in A into the value16 address
-
-  | LDHLnn Word16            -- load the value16 address into the register16 HL
-{- 
-  GMB 8bit load commands
-
-  ld   A,(FF00+n)  F0 nn     12 ---- read from io-port n (memory FF00+n)
-  ld   (FF00+n),A  E0 nn     12 ---- write to io-port n (memory FF00+n)
-  ld   A,(FF00+C)  F2         8 ---- read from io-port C (memory FF00+C)
-  ld   (FF00+C),A  E2         8 ---- write to io-port C (memory FF00+C)
-  ldi  (HL),A      22         8 ---- (HL)=A, HL=HL+1
-  ldi  A,(HL)      2A         8 ---- A=(HL), HL=HL+1
-  ldd  (HL),A      32         8 ---- (HL)=A, HL=HL-1
-  ldd  A,(HL)      3A         8 ---- A=(HL), HL=HL-1 
-  
-  
-GMB 16bit-Loadcommands
-  ld   rr,nn       x1 nn nn  12 ---- rr=nn (rr may be BC,DE,HL or SP)
-  ld   SP,HL       F9         8 ---- SP=HL
-  push rr          x5        16 ---- SP=SP-2  (SP)=rr   (rr may be BC,DE,HL,AF)
-  pop  rr          x1        12 (AF) rr=(SP)  SP=SP+2   (rr may be BC,DE,HL,AF)
--}
+  | LDnnA Word16             -- load the value8 stored in A into the value16 address
+  | LDAIO Word8              -- read into A from IO port n (FF00 + value8)
+  | LDIOA Word8              -- store value8 in A into IO port n (FF00 + value8)
+  | LDAIOC                   -- read from IO port FF00+c into A
+  | LDIOCA                   -- store the value8 in A into IO port FF00+C
+  | LDHLAI                   -- store value in register A into byte pointed by HL and post-increment HL
+  | LDAHLI                   -- store value in address in HL in A and post-increment HL
+  | LDHLAD                   -- store value in register A into byte pointed by HL and post-decrement HL.
+  | LDAHLD                   -- store value in address in HL in A and post-decrement HL
+  | LDrrnn Register16 Word16 -- load the value16 address into the register16
+  | LDSPHL                   -- set the stack pointer to the value in HL
+  | PUSH Register16          -- push register16 onto the stack
+  | POP Register16           -- pop register16 from the stack
 
   deriving (Read, Eq)
