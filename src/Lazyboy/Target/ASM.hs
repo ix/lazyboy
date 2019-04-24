@@ -60,11 +60,14 @@ instance Show Opcode where
 
     show _            = error "Use of unimplemented instruction"
 
--- | Instances of PrintfArg for the registers
+-- | Instances of PrintfArg
 instance PrintfArg Register16 where
     formatArg = formatString . show
 
 instance PrintfArg Register8 where
+    formatArg = formatString . show
+
+instance PrintfArg Condition where
     formatArg = formatString . show
 
 compileROM :: Writer [Opcode] a -> IO Text

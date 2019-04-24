@@ -11,6 +11,10 @@ import           Data.Word
 -- execLazyboy :: Lazyboy a -> [Opcode]
 -- execLazyboy m = execWriter m
 
+-- | Condition codes
+data Condition = Z | NZ | C | NC
+  deriving (Read, Show, Eq)
+
 -- | 8 bit registers
 data Register8 = A | B | C | D | E | H | L
   deriving (Read, Show, Eq)
