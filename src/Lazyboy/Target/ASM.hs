@@ -25,24 +25,18 @@ import           Text.Printf                     (PrintfArg, printf)
 
 -- | Format Opcodes as Strings
 instance Show Opcode where
-    show (LDreg r1 r2)     = mconcat ["ld ", format r1, ", ", format r2]
-    show (LDimm reg val)   = mconcat ["ld ", format reg, ", ", hexify val]
-    show (LD16imm reg val) = mconcat ["ld ", format reg, ", ", hexify val]
-    show (LDHLreg reg)     = "ld [hl], " ++ format reg
-    show (LDHLimm val)     = "ld [hl]," ++ lowercase (hexify val)
-    show (LDregHL reg)     = "ld " ++ format reg ++ ", [hl]"
-
--- | Convert a value to a hexadecimal representation
-hexify :: PrintfArg a => a -> String
-hexify = printf "$%X"
+    show (LDrr r1 r2) = printf "ld %s, %s" (format r1) (format r2)
+    show (LDrn r1 v1) = printf "ld %s, $%X" (format r1) v1
+    show (LDrHL r1) = printf "ld %s, [HL]" (format r1)
+    show (LDHLr r1) = printf "ld [HL], %s" (format r1)
+    show (LDHLn v1) = printf "ld [HL], $%X" v1
+    
+    show (LDHLnn v1) = printf "ld HL, $%X" v1
+    show _ = printf "unimplemented"
 
 -- | Format a value by converting it to a lowercase String
 format :: Show a => a -> String
-format = lowercase . show
-
--- | Convert a String to lowercase
-lowercase :: String -> String
-lowercase = map toLower
+format = map toLower . show
 
 compileROM :: Writer [Opcode] a -> IO Text
 compileROM code = do
