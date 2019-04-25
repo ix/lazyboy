@@ -1,3 +1,16 @@
+{-|
+    Module      : Lazyboy
+    Description : Hardware definitions for Lazyboy
+    Copyright   : (c) Rose 2019
+    License     : BSD3
+    Maintainer  : rose@lain.org.uk
+    Stability   : experimental
+    Portability : POSIX
+
+    This module defines datatypes for the various aspects of the target hardware
+    including registers and instructions.
+-}
+
 module Lazyboy where
 
 import           Control.Monad.Trans.Writer.Lazy
@@ -12,7 +25,7 @@ import           Data.Word
 -- execLazyboy m = execWriter m
 
 -- | Condition codes
-data Condition = Z | NZ | C | NC
+data Condition = Zero | NonZero | Carry | NoCarry
   deriving (Read, Show, Eq)
 
 -- | 8 bit registers
@@ -20,11 +33,11 @@ data Register8 = A | B | C | D | E | H | L
   deriving (Read, Show, Eq)
 
 -- | 16 bit registers
-data Register16 = BC | DE | HL | AF | SP | PC 
+data Register16 = BC | DE | HL | AF | SP | PC
   deriving (Read, Show, Eq)
 
--- | GB Opcodes
-data Opcode =
+-- | GB Opcodes and other special forms
+data Instruction =
     LDrr Register8 Register8 -- load the value in one register8 into another
   | LDrn Register8 Word8     -- load the immediate value8 into a register8
   | LDrHL Register8          -- load the value8 stored at the address in HL into a register8
@@ -48,5 +61,16 @@ data Opcode =
   | LDSPHL                   -- set the stack pointer to the value in HL
   | PUSH Register16          -- push register16 onto the stack
   | POP Register16           -- pop register16 from the stack
+  | JPnn Word16              -- immediately jump to value16
+  | JPHL                     -- immediately jump to the value contained in HL
+  | JPif Condition Word16    -- conditional jump to value16
+  | JRPC Int8                -- relative jump by adding signed value8 to program counter
+  | JRPCif Condition Int8    -- conditional jump to signed value8 + PC
+  | CALL Word16              -- call the address
+  | CALLif Condition Word16  -- conditional call to address
+  | RET                      -- return
+  | RETif Condition          -- conditional return
+  | RETi                     -- return and enable interrupts
+  | RST Word8                -- call a restart vector
 
   deriving (Read, Eq)

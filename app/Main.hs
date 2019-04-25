@@ -17,5 +17,5 @@ main = rom >>= T.putStrLn
             write wram1 0xAB
 
 -- repeat a series of instructions n times
-repeatOp :: Int -> Writer [Opcode] () -> Writer [Opcode] ()
+repeatOp :: Int -> Writer [Instruction] () -> Writer [Instruction] ()
 repeatOp n m = when (n > 0) $ m >> repeatOp (n - 1) m
