@@ -98,7 +98,10 @@ instance PrintfArg Register8 where
     formatArg = formatString . show
 
 instance PrintfArg Condition where
-    formatArg = formatString . show
+    formatArg Zero = formatString "z"
+    formatArg NonZero = formatString "nz"
+    formatArg Carry = formatString "c"
+    formatArg NoCarry = formatString "nc"
 
 compileROM :: Writer [Instruction] a -> IO Text
 compileROM code = do
