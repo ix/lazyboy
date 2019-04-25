@@ -13,8 +13,10 @@ import           Lazyboy.Target.ASM
 main :: IO ()
 main = rom >>= T.putStrLn
     where rom = compileROM $ do
+            tell [LABEL "writes"]
             write wram0 0xEF
             write wram1 0xAB
+            tell [JUMPif NonZero "writes"]
 
 -- repeat a series of instructions n times
 repeatOp :: Int -> Writer [Instruction] () -> Writer [Instruction] ()

@@ -73,4 +73,10 @@ data Instruction =
   | RETi                     -- return and enable interrupts
   | RST Word8                -- call a restart vector
 
+  -- RGBASM-specific convenience stuff.
+  -- these would need revamping if we were to start generating native machine code
+  | LABEL String -- create a global label
+  | JUMP String  -- jump to a label
+  | JUMPif Condition String -- conditional jumping to a label
+
   deriving (Read, Eq)

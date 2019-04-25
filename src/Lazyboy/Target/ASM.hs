@@ -83,6 +83,11 @@ instance Show Instruction where
     show (RST 0x38) = printf "RST $38" 
     show (RST _) = error "Invalid RST vector specified!"
 
+    -- RGBASM specific stuff
+    show (LABEL name) = printf "%s:" name
+    show (JUMP name) = printf "jp %s" name
+    show (JUMPif c name) = printf "jp %s, %s" c name
+
     show _            = error "Use of unimplemented instruction"
 
 -- | Instances of PrintfArg
