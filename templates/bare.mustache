@@ -10,10 +10,10 @@ SECTION "start", ROM0[$0100]
 SECTION "main", ROM0[$0150]
 
 main:
-    {{#body}}
-    {{.}}
-    {{/body}}
-    call wait_vblank
+{{#body}}
+{{.}}
+{{/body}}
+call wait_vblank
 
 wait_vblank:
     ldh a, [$FF44]
