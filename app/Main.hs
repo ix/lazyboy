@@ -2,7 +2,7 @@
 module Main where
 
 import           Control.Monad
-import           Control.Monad.Trans.Writer.Lazy
+import           Control.Monad.Trans.RWS.Lazy
 import qualified Data.Text.Lazy.IO               as T
 import           Data.Word
 import           Lazyboy
@@ -13,10 +13,9 @@ import           Lazyboy.Target.ASM
 main :: IO ()
 main = rom >>= T.putStrLn
     where rom = compileROM $ do
-            tell [LABEL ".writes"]
-            write 0xC0DE 0xDD
-            tell [JUMP ".writes"]
+            withLocalLabel $ do
+                write 0xC0DE 0xDD
 
 -- repeat a series of instructions n times
-repeatOp :: Int -> Writer [Instruction] () -> Writer [Instruction] ()
+repeatOp :: Int -> Lazyboy () -> Lazyboy ()
 repeatOp n m = when (n > 0) $ m >> repeatOp (n - 1) m

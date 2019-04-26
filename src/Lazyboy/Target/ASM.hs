@@ -14,7 +14,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Lazyboy.Target.ASM where
 
-import           Control.Monad.Trans.Writer.Lazy
+import           Control.Monad.Trans.RWS.Lazy
 import           Data.Aeson
 import           Data.Char                       (toLower)
 import           Data.Text.Lazy                  (Text)
@@ -84,7 +84,8 @@ instance Show Instruction where
     show (RST _) = error "Invalid RST vector specified!"
 
     -- RGBASM specific stuff
-    show (LABEL name) = printf "%s:" name
+    show (LABEL v) = printf "L%d:" v
+    show (LOCAL v) = printf ".L%d:" v
     show (JUMP name) = printf "jp %s" name
     show (JUMPif c name) = printf "jp %s, %s" c name
 
@@ -103,8 +104,8 @@ instance PrintfArg Condition where
     formatArg Carry = formatString "c"
     formatArg NoCarry = formatString "nc"
 
-compileROM :: Writer [Instruction] a -> IO Text
+compileROM :: Lazyboy a -> IO Text
 compileROM code = do
     tem <- compileMustacheFile "templates/bare.mustache"
     return $ renderMustache tem $ object [ "body" .= body ]
-    where body = map show $ execWriter code
+    where body = map show $ execLazyboy code

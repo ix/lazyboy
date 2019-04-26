@@ -13,16 +13,19 @@
 
 module Lazyboy where
 
-import           Control.Monad.Trans.Writer.Lazy
+import           Control.Monad                   (replicateM)
+import           Control.Monad.IO.Class          (liftIO)
+import           Control.Monad.Trans.Class       (lift)
+import           Control.Monad.Trans.RWS.Lazy
 import           Data.Int
 import           Data.Word
+import           System.Random
 
--- Rename and re-export Writer types and functions
--- type Lazyboy a = Writer [Opcode] a
--- type LazyboyT m a = WriterT [Opcode] m a
+-- Rename and re-export RWS types and functions
+type Lazyboy a = RWS () [Instruction] Int a
 
--- execLazyboy :: Lazyboy a -> [Opcode]
--- execLazyboy m = execWriter m
+execLazyboy :: Lazyboy a -> [Instruction]
+execLazyboy m = snd $ execRWS m () 1
 
 -- | Condition codes
 data Condition = Zero | NonZero | Carry | NoCarry
@@ -75,8 +78,26 @@ data Instruction =
 
   -- RGBASM-specific convenience stuff.
   -- these would need revamping if we were to start generating native machine code
-  | LABEL String -- create a global label
-  | JUMP String  -- jump to a label
-  | JUMPif Condition String -- conditional jumping to a label
+  | LABEL Int                -- create a numbered global label
+  | LOCAL Int                -- create a numbered local label
+  | JUMP String              -- jump to a label
+  | JUMPif Condition String  -- conditional jumping to a label
 
   deriving (Read, Eq)
+
+withLabel :: Lazyboy () -> Lazyboy ()
+withLabel block = do
+  label <- get
+  modify (+ 1) -- increment the label name counter
+  tell $ mconcat [[LABEL label], execLazyboy block]
+
+withLocalLabel :: Lazyboy () -> Lazyboy ()
+withLocalLabel block = do
+  label <- get
+  modify (+ 1) -- increment the label name counter
+  tell $ mconcat [[LOCAL label], execLazyboy block]
+
+cond :: Condition -> Lazyboy () -> Lazyboy ()
+cond condition block = do
+  withLabel $ do
+    tell []
