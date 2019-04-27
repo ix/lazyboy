@@ -38,6 +38,9 @@ data Register8 = A | B | C | D | E | H | L
 data Register16 = BC | DE | HL | AF | SP | PC
   deriving (Read, Show, Eq)
 
+data Label = Local Int | Global Int
+  deriving (Read, Show, Eq)
+
 -- | GB Opcodes and other special forms
 data Instruction =
     LDrr Register8 Register8 -- load the value in one register8 into another
@@ -77,10 +80,9 @@ data Instruction =
 
   -- RGBASM-specific convenience stuff.
   -- these would need revamping if we were to start generating native machine code
-  | LABEL Int                -- create a numbered global label
-  | LOCAL Int                -- create a numbered local label
-  | JUMP String              -- jump to a label
-  | JUMPif Condition String  -- conditional jumping to a label
+  | LABEL Label               -- create a numbered label
+  | JUMP Label                -- jump to a label
+  | JUMPif Condition Label    -- conditional jumping to a label
 
   deriving (Read, Eq)
 
@@ -88,15 +90,29 @@ withLabel :: Lazyboy () -> Lazyboy ()
 withLabel block = do
   label <- get
   modify (+ 1) -- increment the label name counter
-  tell $ mconcat [[LABEL label], execLazyboy block]
+  tell [LABEL $ Global label] 
+  block
 
 withLocalLabel :: Lazyboy () -> Lazyboy ()
 withLocalLabel block = do
   label <- get
   modify (+ 1) -- increment the label name counter
-  tell $ mconcat [[LOCAL label], execLazyboy block]
+  tell [LABEL $ Local label]
+  block
+
+
+loop :: Lazyboy () -> Lazyboy ()
+loop block = do
+  label <- get
+  modify (+ 1)
+  tell [LABEL $ Local label]
+  block
+  tell [JUMP $ Local label]
 
 cond :: Condition -> Lazyboy () -> Lazyboy ()
 cond condition block = do
-  withLabel $ do
-    tell []
+  label <- get
+  modify (+ 1)
+  tell [JUMPif condition $ Local label]
+  block
+  tell [LABEL $ Local label]

@@ -85,10 +85,9 @@ instance Show Instruction where
     show (RST _) = error "Invalid RST vector specified!"
 
     -- RGBASM specific stuff
-    show (LABEL v) = printf "L%d:" v
-    show (LOCAL v) = printf ".L%d:" v
-    show (JUMP name) = printf "jp %s" name
-    show (JUMPif c name) = printf "jp %s, %s" c name
+    show (LABEL l) = printf "%s:" l
+    show (JUMP l) = printf "jp %s" l
+    show (JUMPif c l) = printf "jp %s, %s" c l
 
     show _            = error "Use of unimplemented instruction"
 
@@ -104,6 +103,10 @@ instance PrintfArg Condition where
     formatArg NonZero = formatString "nz"
     formatArg Carry   = formatString "c"
     formatArg NoCarry = formatString "nc"
+
+instance PrintfArg Label where
+    formatArg (Local v) = formatString $ ".L" ++ show v
+    formatArg (Global v) = formatString $ "L" ++ show v
 
 compileROM :: Lazyboy a -> IO Text
 compileROM code = do
