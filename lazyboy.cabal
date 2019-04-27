@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 61b85fd7ed40da57d33c66e5ce9d9fee2d0e5377c2627e51a5387aff9833857f
+-- hash: 671df23e7252a73d9b8184cefc7d9e6a4e92cc455a1966611a25f1d384477141
 
 name:           lazyboy
 version:        0.1.0.0
@@ -20,6 +20,8 @@ build-type:     Simple
 extra-source-files:
     README.md
     ChangeLog.md
+data-files:
+    templates/bare.mustache
 
 source-repository head
   type: git
@@ -38,7 +40,6 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
-    , filepath
     , microstache
     , text
     , transformers
@@ -54,7 +55,6 @@ executable lazyboy
   build-depends:
       aeson
     , base >=4.7 && <5
-    , filepath
     , lazyboy
     , microstache
     , text
@@ -72,7 +72,6 @@ test-suite lazyboy-test
   build-depends:
       aeson
     , base >=4.7 && <5
-    , filepath
     , lazyboy
     , microstache
     , text

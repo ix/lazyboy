@@ -16,10 +16,11 @@ module Lazyboy.Target.ASM where
 
 import           Control.Monad.Trans.RWS.Lazy
 import           Data.Aeson
-import           Data.Char                       (toLower)
-import           Data.Text.Lazy                  (Text)
-import qualified Data.Text.Lazy.IO               as T
+import           Data.Char                    (toLower)
+import           Data.Text.Lazy               (Text)
+import qualified Data.Text.Lazy.IO            as T
 import           Lazyboy
+import           Paths_lazyboy
 import           Text.Microstache
 import           Text.Printf
 
@@ -59,7 +60,7 @@ instance Show Instruction where
     show (POP PC) = error "You cannot pop the program counter from the stack"
     show (POP r1) = printf "POP %s" r1
 
-    -- jumps 
+    -- jumps
     show (JPnn v1) = printf "jp $%X" v1
     show (JPHL) = printf "jp HL"
     show (JPif c v1) = printf "jp %s, $%X" c v1
@@ -72,15 +73,15 @@ instance Show Instruction where
     show (RET) = printf "ret"
     show (RETif c) = printf "ret %s" c
     show (RETi) = printf "reti"
-    
-    show (RST 0x00) = printf "RST $00" 
-    show (RST 0x08) = printf "RST $08" 
-    show (RST 0x10) = printf "RST $10" 
-    show (RST 0x18) = printf "RST $18" 
-    show (RST 0x20) = printf "RST $20" 
-    show (RST 0x28) = printf "RST $28" 
-    show (RST 0x30) = printf "RST $30" 
-    show (RST 0x38) = printf "RST $38" 
+
+    show (RST 0x00) = printf "RST $00"
+    show (RST 0x08) = printf "RST $08"
+    show (RST 0x10) = printf "RST $10"
+    show (RST 0x18) = printf "RST $18"
+    show (RST 0x20) = printf "RST $20"
+    show (RST 0x28) = printf "RST $28"
+    show (RST 0x30) = printf "RST $30"
+    show (RST 0x38) = printf "RST $38"
     show (RST _) = error "Invalid RST vector specified!"
 
     -- RGBASM specific stuff
@@ -99,13 +100,14 @@ instance PrintfArg Register8 where
     formatArg = formatString . show
 
 instance PrintfArg Condition where
-    formatArg Zero = formatString "z"
+    formatArg Zero    = formatString "z"
     formatArg NonZero = formatString "nz"
-    formatArg Carry = formatString "c"
+    formatArg Carry   = formatString "c"
     formatArg NoCarry = formatString "nc"
 
 compileROM :: Lazyboy a -> IO Text
 compileROM code = do
-    tem <- compileMustacheFile "templates/bare.mustache"
+    templatePath <- getDataFileName "templates/bare.mustache"
+    tem <- compileMustacheFile templatePath
     return $ renderMustache tem $ object [ "body" .= body ]
     where body = map show $ execLazyboy code

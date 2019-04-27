@@ -10,6 +10,9 @@ extra-source-files:
 - README.md
 - ChangeLog.md
 
+# templates
+data-files: templates/*.mustache
+
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
 # category:            Web
@@ -25,7 +28,6 @@ dependencies:
 - microstache 
 - aeson
 - text
-- filepath
 
 library:
   source-dirs: src
