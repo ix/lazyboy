@@ -25,7 +25,7 @@ dependencies:
 - microstache 
 - aeson
 - text
-- random
+- filepath
 
 library:
   source-dirs: src

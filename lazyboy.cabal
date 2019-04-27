@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: a229029f6800a9b7f62e2f4fbb1f335c337573fba631b9b1b8e7e0106f15f3e5
+-- hash: 61b85fd7ed40da57d33c66e5ce9d9fee2d0e5377c2627e51a5387aff9833857f
 
 name:           lazyboy
 version:        0.1.0.0
@@ -38,8 +38,8 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , filepath
     , microstache
-    , random
     , text
     , transformers
   default-language: Haskell2010
@@ -54,9 +54,9 @@ executable lazyboy
   build-depends:
       aeson
     , base >=4.7 && <5
+    , filepath
     , lazyboy
     , microstache
-    , random
     , text
     , transformers
   default-language: Haskell2010
@@ -72,9 +72,9 @@ test-suite lazyboy-test
   build-depends:
       aeson
     , base >=4.7 && <5
+    , filepath
     , lazyboy
     , microstache
-    , random
     , text
     , transformers
   default-language: Haskell2010

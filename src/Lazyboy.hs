@@ -19,7 +19,6 @@ import           Control.Monad.Trans.Class       (lift)
 import           Control.Monad.Trans.RWS.Lazy
 import           Data.Int
 import           Data.Word
-import           System.Random
 
 -- Rename and re-export RWS types and functions
 type Lazyboy a = RWS () [Instruction] Int a
