@@ -21,7 +21,7 @@ import           Data.Int
 import           Data.Word
 
 -- Rename and re-export RWS types and functions
-type Lazyboy a = RWS () [Instruction] Int a
+type Lazyboy a = RWS () [Instruction] Integer a
 
 execLazyboy :: Lazyboy a -> [Instruction]
 execLazyboy m = snd $ execRWS m () 1
@@ -38,7 +38,7 @@ data Register8 = A | B | C | D | E | H | L
 data Register16 = BC | DE | HL | AF | SP | PC
   deriving (Read, Show, Eq)
 
-data Label = Local Int | Global Int
+data Label = Local Integer | Global Integer
   deriving (Read, Show, Eq)
 
 -- | GB Opcodes and other special forms
