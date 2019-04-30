@@ -4,13 +4,13 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 671df23e7252a73d9b8184cefc7d9e6a4e92cc455a1966611a25f1d384477141
+-- hash: 50e2efe91013af4befe4d54b9e0ae9864a09d9e60d7a7ad2f15b4ea3b3eadf25
 
 name:           lazyboy
 version:        0.1.0.0
 description:    Please see the README on GitHub at <https://github.com/ralsei/lazyboy#readme>
-homepage:       https://github.com/ralsei/lazyboy#readme
-bug-reports:    https://github.com/ralsei/lazyboy/issues
+homepage:       https://github.com/ix/lazyboy#readme
+bug-reports:    https://github.com/ix/lazyboy/issues
 author:         Rose
 maintainer:     rose@lain.org.uk
 copyright:      2018 Rose
@@ -25,7 +25,7 @@ data-files:
 
 source-repository head
   type: git
-  location: https://github.com/ralsei/lazyboy
+  location: https://github.com/ix/lazyboy
 
 library
   exposed-modules:

@@ -1,6 +1,6 @@
 name:                lazyboy
 version:             0.1.0.0
-github:              "ralsei/lazyboy"
+github:              "ix/lazyboy"
 license:             BSD3
 author:              "Rose"
 maintainer:          "rose@lain.org.uk"
@@ -20,7 +20,7 @@ data-files: templates/*.mustache
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/ralsei/lazyboy#readme>
+description:         An EDSL for programming the Nintendo Game Boy. <https://github.com/ix/lazyboy#readme>
 
 dependencies:
 - base >= 4.7 && < 5
