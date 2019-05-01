@@ -140,16 +140,16 @@ withLocalLabel block = do
 
 loop :: Lazyboy () -> Lazyboy ()
 loop block = do
-  label <- get
+  label <- Local <$> get
   modify (+ 1)
-  tell [LABEL $ Local label]
+  tell [LABEL label]
   block
-  tell [JUMP $ Local label]
+  tell [JUMP label]
 
 cond :: Condition -> Lazyboy () -> Lazyboy ()
 cond condition block = do
-  label <- get
+  label <- Local <$> get
   modify (+ 1)
-  tell [JUMPif condition $ Local label]
+  tell [JUMPif condition label]
   block
-  tell [LABEL $ Local label]
+  tell [LABEL label]
