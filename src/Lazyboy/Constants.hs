@@ -50,6 +50,7 @@ vram = 0x8000
 background1 :: Word16
 background1 = 0x9800
 
+-- | Start of 32x32 tile background map #2
 background2 :: Word16
 background2 = 0x9C00
 
