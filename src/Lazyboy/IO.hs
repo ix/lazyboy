@@ -14,9 +14,31 @@
 module Lazyboy.IO where
 
 import           Control.Monad.Trans.RWS.Lazy
+import           Data.Bits
 import           Data.Word
 import           Lazyboy.Control
 import           Lazyboy.Types
+
+data LCDState = LCDState { lcdDisplayEnable       :: Bool
+                         , lcdWindowTileMap       :: Bool
+                         , lcdEnableWindowDisplay :: Bool
+                         , lcdWindowSelect        :: Bool
+                         , lcdTileMapSelect       :: Bool
+                         , lcdObjSize             :: Bool
+                         , lcdEnableObjects       :: Bool
+                         , lcdBackgroundEnable    :: Bool
+                         }
+
+pack :: LCDState -> Word8
+pack lcds = zeroBits .|. lcdDE .|. lcdWTM .|. lcdEWD .|. lcdWS .|. lcdTMS .|. lcdOS .|. lcdEO .|. lcdBE
+    where lcdDE  = if lcdDisplayEnable lcds       then 0b10000000 else 0
+          lcdWTM = if lcdWindowTileMap lcds       then 0b01000000 else 0
+          lcdEWD = if lcdEnableWindowDisplay lcds then 0b00100000 else 0
+          lcdWS  = if lcdWindowSelect lcds        then 0b00010000 else 0
+          lcdTMS = if lcdTileMapSelect lcds       then 0b00001000 else 0
+          lcdOS  = if lcdObjSize lcds             then 0b00000100 else 0
+          lcdEO  = if lcdEnableObjects lcds       then 0b00000010 else 0
+          lcdBE  = if lcdBackgroundEnable lcds    then 0b00000001 else 0 
 
 -- | Loads an 8-bit immediate value into an 8-bit register
 byte :: Register8 -> Word8 -> Lazyboy ()

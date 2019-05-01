@@ -22,6 +22,10 @@ wram0 = 0xC000
 wram1 :: Word16
 wram1 = 0xD000
 
+-- | Player 1 Joypad
+joypad :: Word16
+joypad = 0xFF00
+
 -- | LCD Control
 lcdc :: Word16
 lcdc = 0xFF40
