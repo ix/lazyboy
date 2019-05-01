@@ -12,6 +12,7 @@ byte reg val = tell [LDrn reg val]
 write :: Word16 -> Word8 -> Lazyboy ()
 write addr val = tell [LDrrnn HL addr, LDHLn val] 
 
+-- | Copy a region of memory to a destination (up to 255 bytes)
 memcpy :: Word16 -> Word16 -> Word8 -> Lazyboy ()
 memcpy src dest len = do
     -- load the destination into DE, source into HL and length into B
