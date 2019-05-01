@@ -1,3 +1,15 @@
+{-|
+    Module      : Lazyboy.IO
+    Description : IO library for Lazyboy
+    Copyright   : (c) Rose 2019
+    License     : BSD3
+    Maintainer  : rose@lain.org.uk
+    Stability   : experimental
+    Portability : POSIX
+
+    This module defines abstract IO operations for Lazyboy.
+-}
+
 module Lazyboy.IO where
 
 import           Control.Monad.Trans.RWS.Lazy

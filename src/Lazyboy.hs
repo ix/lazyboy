@@ -8,7 +8,7 @@
     Portability : POSIX
 
     This module defines datatypes for the various aspects of the target hardware
-    including registers and instructions.
+    including registers and instructions. It also includes control flow functions.
 -}
 
 module Lazyboy where

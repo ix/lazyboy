@@ -1,3 +1,15 @@
+{-|
+    Module      : Lazyboy.Constants
+    Description : Constant definitions for Lazyboy
+    Copyright   : (c) Rose 2019
+    License     : BSD3
+    Maintainer  : rose@lain.org.uk
+    Stability   : experimental
+    Portability : POSIX
+
+    This module provides definitions of constants referring to the Game Boy hardware.
+-}
+
 module Lazyboy.Constants where
 
 import Data.Word
