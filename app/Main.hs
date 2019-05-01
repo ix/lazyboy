@@ -19,6 +19,7 @@ main = rom >>= T.putStrLn
             write (wram0 + 11) 0xCE
             memcpy wram1 wram0 10
             memcpy (wram0 + 10) (wram1 + 10) 10
+            freeze
                 
 
 -- repeat a series of instructions n times

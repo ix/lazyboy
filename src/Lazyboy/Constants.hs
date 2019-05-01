@@ -41,3 +41,7 @@ scx = 0xFF42
 -- | Scroll Y
 scy :: Word16
 scy = 0xFF43
+
+-- | Video RAM (VRAM)
+vram :: Word16
+vram = 0x8000

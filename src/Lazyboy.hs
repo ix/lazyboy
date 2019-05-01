@@ -143,6 +143,7 @@ data Instruction =
 
   deriving (Read, Eq)
 
+-- | Execute an action within a global label and pass the action the label.
 withLabel :: (Label -> Lazyboy ()) -> Lazyboy ()
 withLabel block = do
   label <- Global <$> get
@@ -150,6 +151,7 @@ withLabel block = do
   tell [LABEL label] 
   block label
 
+-- | Execute an action within a local label and pass the action the label.
 withLocalLabel :: (Label -> Lazyboy ()) -> Lazyboy ()
 withLocalLabel block = do
   label <- Local <$> get
@@ -157,15 +159,17 @@ withLocalLabel block = do
   tell [LABEL label]
   block label
 
+-- | Suspend execution indefinitely by jumping infinitely.
+freeze :: Lazyboy ()
+freeze = loop $ return ()
+  where loop block = do
+    label <- Local <$> get
+    modify (+ 1)
+    tell [LABEL label]
+    block
+    tell [JUMP lbel]
 
-loop :: Lazyboy () -> Lazyboy ()
-loop block = do
-  label <- Local <$> get
-  modify (+ 1)
-  tell [LABEL label]
-  block
-  tell [JUMP label]
-
+-- | Executes the given action provided condition flag is set.
 cond :: Condition -> Lazyboy () -> Lazyboy ()
 cond condition block = do
   label <- Local <$> get
