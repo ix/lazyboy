@@ -13,9 +13,9 @@
 
 module Lazyboy where
 
-import           Control.Monad                   (replicateM)
-import           Control.Monad.IO.Class          (liftIO)
-import           Control.Monad.Trans.Class       (lift)
+import           Control.Monad                (replicateM)
+import           Control.Monad.IO.Class       (liftIO)
+import           Control.Monad.Trans.Class    (lift)
 import           Control.Monad.Trans.RWS.Lazy
 import           Data.Int
 import           Data.Word
@@ -64,7 +64,7 @@ data Instruction =
   | LDSPHL                   -- set the stack pointer to the value in HL
   | PUSH Register16          -- push register16 onto the stack
   | POP Register16           -- pop register16 from the stack
-  
+
   -- Jump & Call instructions
   | JPnn Word16              -- immediately jump to value16
   | JPHL                     -- immediately jump to the value contained in HL
@@ -111,7 +111,7 @@ data Instruction =
   | CPL                      -- complement accumulator (A = ~A)
   | ADDHLrr Register16       -- add the value contained in a 16 bit register to HL
   | INCrr Register16         -- increment the value in a 16 bit register
-  | DECrr Register16         -- decrement the value in a 16 bit register 
+  | DECrr Register16         -- decrement the value in a 16 bit register
   | ADDSPn Int8              -- add the signed value8 to the stack pointer
   | LDHLSPn Int8             -- load into hl the stack pointer + a value8
 
@@ -148,7 +148,7 @@ withLabel :: (Label -> Lazyboy ()) -> Lazyboy ()
 withLabel block = do
   label <- Global <$> get
   modify (+ 1) -- increment the label name counter
-  tell [LABEL label] 
+  tell [LABEL label]
   block label
 
 -- | Execute an action within a local label and pass the action the label.

@@ -12,7 +12,7 @@
 
 module Lazyboy.Constants where
 
-import Data.Word
+import           Data.Word
 
 -- | Background Palette Data
 bgp :: Word16

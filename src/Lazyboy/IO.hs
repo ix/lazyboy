@@ -22,7 +22,7 @@ byte reg val = tell [LDrn reg val]
 
 -- | Loads an 8-bit immediate value into a 16-bit memory address
 write :: Word16 -> Word8 -> Lazyboy ()
-write addr val = tell [LDrrnn HL addr, LDHLn val] 
+write addr val = tell [LDrrnn HL addr, LDHLn val]
 
 -- | Copy a region of memory to a destination (up to 255 bytes)
 memcpy :: Word16 -> Word16 -> Word8 -> Lazyboy ()

@@ -3,7 +3,7 @@ module Main where
 
 import           Control.Monad
 import           Control.Monad.Trans.RWS.Lazy
-import qualified Data.Text.Lazy.IO               as T
+import qualified Data.Text.Lazy.IO            as T
 import           Data.Word
 import           Lazyboy
 import           Lazyboy.Constants
@@ -20,7 +20,7 @@ main = rom >>= T.putStrLn
             memcpy wram1 wram0 10
             memcpy (wram0 + 10) (wram1 + 10) 10
             freeze
-                
+
 
 -- repeat a series of instructions n times
 repeatOp :: Int -> Lazyboy () -> Lazyboy ()

@@ -92,16 +92,16 @@ instance Show Instruction where
     show (ADDAr r1) = printf "add A, %s" r1
     show (ADDAn v) = printf "add A, %d" v
     show (ADDHL) = printf "add A, [HL]"
-    show (ADCAr r1) = printf "adc A, %s" r1 
+    show (ADCAr r1) = printf "adc A, %s" r1
     show (ADCAn v) = printf "adc A, %d" v
     show (ADCHL) = printf "adc A, [HL]"
     show (SUBAr r1) = printf "sub A, %s" r1
     show (SUBAn v) = printf "sub A, %d" v
     show (SUBHL) = printf "sub A, [HL]"
-    show (SBCAr r1) = printf "sbc A, %s" r1 
+    show (SBCAr r1) = printf "sbc A, %s" r1
     show (SBCAn v) = printf "sbc A, %d" v
     show (SBCAHL) = printf "sbc A, [HL]"
-    
+
     show (ANDr r1) = printf "and A, %s" r1
     show (ANDn v) = printf "and A, %d" v
     show (ANDHL) = printf "and A, [HL]"
@@ -121,20 +121,20 @@ instance Show Instruction where
     show (DAA) = printf "daa"
     show (CPL) = printf "cpl"
     show (ADDHLrr BC) = printf "add HL, BC"
-    show (ADDHLrr DE) = printf "add HL, DE"  
-    show (ADDHLrr HL) = printf "add HL, HL" 
+    show (ADDHLrr DE) = printf "add HL, DE"
+    show (ADDHLrr HL) = printf "add HL, HL"
     show (ADDHLrr SP) = printf "add HL, SP"
-    show (ADDHLrr r1) = error "Cannot add the given the 16 bit register to HL" 
+    show (ADDHLrr r1) = error "Cannot add the given the 16 bit register to HL"
     show (INCrr BC) = printf "inc BC"
-    show (INCrr DE) = printf "inc DE"  
-    show (INCrr HL) = printf "inc HL" 
+    show (INCrr DE) = printf "inc DE"
+    show (INCrr HL) = printf "inc HL"
     show (INCrr SP) = printf "inc SP"
-    show (INCrr r1) = error "Cannot increment the given 16 bit register" 
+    show (INCrr r1) = error "Cannot increment the given 16 bit register"
     show (DECrr BC) = printf "dec BC"
-    show (DECrr DE) = printf "dec DE"  
-    show (DECrr HL) = printf "dec HL" 
+    show (DECrr DE) = printf "dec DE"
+    show (DECrr HL) = printf "dec HL"
     show (DECrr SP) = printf "dec SP"
-    show (DECrr r1) = error "Cannot decrement the given 16 bit register" 
+    show (DECrr r1) = error "Cannot decrement the given 16 bit register"
 
     -- CPU control
     show (CCF) = printf "ccf"
@@ -166,7 +166,7 @@ instance PrintfArg Condition where
     formatArg NoCarry = formatString "nc"
 
 instance PrintfArg Label where
-    formatArg (Local v) = formatString $ ".L" ++ show v
+    formatArg (Local v)  = formatString $ ".L" ++ show v
     formatArg (Global v) = formatString $ "L" ++ show v
 
 compileROM :: Lazyboy a -> IO Text
