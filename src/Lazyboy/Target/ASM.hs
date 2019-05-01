@@ -145,6 +145,26 @@ instance Show Instruction where
     show (DI) = printf "di"
     show (EI) = printf "ei"
 
+    -- Bit manipulation
+    show (BITnr v r1)
+        | v >= 0 && v <= 7 = printf "bit %d, %s" v r1
+        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+    show (BITnHL v)
+        | v >= 0 && v <= 7 = printf "bit %d, HL" v
+        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+    show (SETnr v r1)
+        | v >= 0 && v <= 7 = printf "set %d, %s" v r1
+        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+    show (SETnHL v)
+        | v >= 0 && v <= 7 = printf "set %d, HL" v
+        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+    show (RESnr v r1)
+        | v >= 0 && v <= 7 = printf "res %d, %s" v r1
+        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+    show (RESnHL v)
+        | v >= 0 && v <= 7 = printf "res %d, HL" v
+        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+
     -- RGBASM specific stuff
     show (LABEL l) = printf "%s:" l
     show (JUMP l) = printf "jp %s" l
