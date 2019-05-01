@@ -6,8 +6,6 @@ import           Control.Monad.Trans.RWS.Lazy
 import qualified Data.Text.Lazy.IO            as T
 import           Data.Word
 import           Lazyboy
-import           Lazyboy.Constants
-import           Lazyboy.IO
 import           Lazyboy.Target.ASM
 
 main :: IO ()

@@ -15,7 +15,8 @@ module Lazyboy.IO where
 
 import           Control.Monad.Trans.RWS.Lazy
 import           Data.Word
-import           Lazyboy
+import           Lazyboy.Control
+import           Lazyboy.Types
 
 -- | Loads an 8-bit immediate value into an 8-bit register
 byte :: Register8 -> Word8 -> Lazyboy ()

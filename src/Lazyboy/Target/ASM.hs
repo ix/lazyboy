@@ -19,7 +19,7 @@ import           Data.Aeson
 import           Data.Char                    (toLower)
 import           Data.Text.Lazy               (Text)
 import qualified Data.Text.Lazy.IO            as T
-import           Lazyboy
+import           Lazyboy.Types
 import           Paths_lazyboy
 import           Text.Microstache
 import           Text.Printf
