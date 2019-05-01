@@ -163,11 +163,11 @@ withLocalLabel block = do
 freeze :: Lazyboy ()
 freeze = loop $ return ()
   where loop block = do
-    label <- Local <$> get
-    modify (+ 1)
-    tell [LABEL label]
-    block
-    tell [JUMP lbel]
+          label <- Local <$> get
+          modify (+ 1)
+          tell [LABEL label]
+          block
+          tell [JUMP label]
 
 -- | Executes the given action provided condition flag is set.
 cond :: Condition -> Lazyboy () -> Lazyboy ()
