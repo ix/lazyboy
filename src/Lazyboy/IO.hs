@@ -10,6 +10,7 @@
     This module defines abstract IO operations for Lazyboy.
 -}
 
+{-# LANGUAGE BinaryLiterals #-}
 module Lazyboy.IO where
 
 import           Control.Monad.Trans.RWS.Lazy
@@ -32,3 +33,4 @@ memcpy src dest len = do
     withLocalLabel $ \label -> do
         tell [LDAHLI] -- load a byte from [HL] into A and increment
         tell [LDrrA DE, INCrr DE, DECr B, JUMPif NonZero label]
+

@@ -46,6 +46,13 @@ scy = 0xFF43
 vram :: Word16
 vram = 0x8000
 
+-- | Start of 32x32 tile background map #1
+background1 :: Word16
+background1 = 0x9800
+
+background2 :: Word16
+background2 = 0x9C00
+
 -- | High RAM (HRAM)
 hram :: Word16
 hram = 0xFF80
