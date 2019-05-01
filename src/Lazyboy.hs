@@ -66,6 +66,8 @@ data Instruction =
   | LDSPHL                   -- set the stack pointer to the value in HL
   | PUSH Register16          -- push register16 onto the stack
   | POP Register16           -- pop register16 from the stack
+  
+  -- Jump & Call instructions
   | JPnn Word16              -- immediately jump to value16
   | JPHL                     -- immediately jump to the value contained in HL
   | JPif Condition Word16    -- conditional jump to value16
@@ -77,6 +79,38 @@ data Instruction =
   | RETif Condition          -- conditional return
   | RETi                     -- return and enable interrupts
   | RST Word8                -- call a restart vector
+
+  -- Arithmetic & Logical instructions
+  | ADDAr Register8          -- add the value contained in a register to A
+  | ADDAn Word8              -- add a value8 to the value contained in A
+  | ADDHL                    -- add the value contained in the address stored in HL to A
+  | ADCAr Register8          -- add the value in the register + the carry flag to A
+  | ADCAn Word8              -- add the immediate value + the carry flag to A
+  | ADCHL                    -- add the value contained in the address in HL + the carry flag to A
+  | SUBAr Register8          -- subtract the value contained in a register from A
+  | SUBAn Word8              -- subtract a value8 from A
+  | SUBHL                    -- subtract from A the value contained in the address in HL
+  | SBCAr Register8          -- subtract from A the value contained in the register + carry flag
+  | SBCAn Word8              -- subtract from A the value + carry flag
+  | SBCAHL                   -- subtract from A the value contained in the address in HL + carry flag
+  | ANDr Register8           -- assign to A the value contained in a register & itself
+  | ANDn Word8               -- assign to A a value8 & itself
+  | ANDHL                    -- assign to A itself & the value in the address in HL
+  | XORr Register8           -- assign to A the value contained in a register ^ itself
+  | XORn Word8               -- assign to A a value8 ^ itself
+  | XORHL                    -- assign to A itself ^ the value in the address in HL
+  | ORr Register8            -- assign to A the value contained in a register | itself
+  | ORn Word8                -- assign to A a value8 | itself
+  | ORHL                     -- assign to A itself | the value in the address in HL
+  | CPr Register8            -- substract from A the value in a register and set flags accordingly, don't store the result
+  | CPn Word8                -- subtract from A a value8 and set flags accordingly, but don't store the result
+  | CPHL                     -- subtract from A the value in the address in HL, set flags, don't store the result
+  | INC Register8            -- increment the value in a register
+  | INCHL                    -- increment the value at the address in HL
+  | DEC Register8            -- decrement the value in a register
+  | DECHL                    -- decrement the value at the address in HL
+  | DAA                      -- decimal-adjust register A
+  | CPL                      -- complement accumulator (A = ~A)
 
   -- RGBASM-specific convenience stuff.
   -- these would need revamping if we were to start generating native machine code

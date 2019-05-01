@@ -65,7 +65,7 @@ instance Show Instruction where
     show (JPHL) = printf "jp HL"
     show (JPif c v1) = printf "jp %s, $%X" c v1
     show (JRPC v1) = printf "jr %d" v1
-    show (JRPCif c v1) = printf "jr %s, %d" c v1
+    show (JRPCif c v1) = printf "jr %s, $%X" c v1
 
     -- call and return
     show (CALL v1) = printf "call $%X" v1
@@ -83,6 +83,39 @@ instance Show Instruction where
     show (RST 0x30) = printf "RST $30"
     show (RST 0x38) = printf "RST $38"
     show (RST _) = error "Invalid RST vector specified!"
+
+    -- arithmetic and comparisons
+    show (ADDAr r1) = printf "add A, %s" r1
+    show (ADDAn v) = printf "add A, $%X" v
+    show (ADDHL) = printf "add A, [HL]"
+    show (ADCAr r1) = printf "adc A, %s" r1 
+    show (ADCAn v) = printf "adc A, $%X" v
+    show (ADCHL) = printf "adc A, [HL]"
+    show (SUBAr r1) = printf "sub A, %s" r1
+    show (SUBAn v) = printf "sub A, $%X" v
+    show (SUBHL) = printf "sub A, [HL]"
+    show (SBCAr r1) = printf "sbc A, %s" r1 
+    show (SBCAn v) = printf "sbc A, $%X" v
+    show (SBCAHL) = printf "sbc A, [HL]"
+    
+    show (ANDr r1) = printf "and A, %s" r1
+    show (ANDn v) = printf "and A, $%X" v
+    show (ANDHL) = printf "and A, [HL]"
+    show (XORr r1) = printf "xor A, %s" r1
+    show (XORn v) = printf "xor A, $%X" v
+    show (XORHL) = printf "xor A, [HL]"
+    show (ORr r1) = printf "or A, %s" r1
+    show (ORn v) = printf "or A, $%X" v
+    show (ORHL) = printf "or A, [HL]"
+    show (CPr r1) = printf "cp A, %s" r1
+    show (CPn v) = printf "cp A, $%X" v
+    show (CPHL) = printf "cp A, [HL]"
+    show (INC r1) = printf "inc %s" r1
+    show (INCHL) = printf "inc [HL]"
+    show (DEC r1) = printf "dec %s" r1
+    show (DECHL) = printf "dec [HL]"
+    show (DAA) = printf "daa"
+    show (CPL) = printf "cpl"
 
     -- RGBASM specific stuff
     show (LABEL l) = printf "%s:" l
