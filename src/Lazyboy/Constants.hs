@@ -45,3 +45,10 @@ scy = 0xFF43
 -- | Video RAM (VRAM)
 vram :: Word16
 vram = 0x8000
+
+-- | High RAM (HRAM)
+hram :: Word16
+hram = 0xFF80
+
+oam :: Word16
+oam = 0xFE00
