@@ -48,11 +48,9 @@ data Instruction =
   | LDrHL Register8          -- load the value8 stored at the address in HL into a register8
   | LDHLr Register8          -- load the value8 stored in a register8 into the address in HL
   | LDHLn Word8              -- load the immediate value8 into the address in HL
-  | LDABC                    -- load the value8 stored in the address in BC into A
-  | LDADE                    -- load the value8 stored in the address in DE into A
+  | LDArr Register16         -- load the value at the address contained in a 16 bit register into A
+  | LDrrA Register16         -- laod A into the address contained in a 16 bit register
   | LDAnn Word16             -- load the value8 stored in the value16 address into A
-  | LDBCA                    -- load the value8 stored in A into the address in BC
-  | LDDEA                    -- load the value8 stored in A into the address in DE
   | LDnnA Word16             -- load the value8 stored in A into the value16 address
   | LDAIO Word8              -- read into A from IO port n (FF00 + value8)
   | LDIOA Word8              -- store value8 in A into IO port n (FF00 + value8)
@@ -105,12 +103,17 @@ data Instruction =
   | CPr Register8            -- substract from A the value in a register and set flags accordingly, don't store the result
   | CPn Word8                -- subtract from A a value8 and set flags accordingly, but don't store the result
   | CPHL                     -- subtract from A the value in the address in HL, set flags, don't store the result
-  | INC Register8            -- increment the value in a register
+  | INCr Register8           -- increment the value in a register
   | INCHL                    -- increment the value at the address in HL
-  | DEC Register8            -- decrement the value in a register
+  | DECr Register8           -- decrement the value in a register
   | DECHL                    -- decrement the value at the address in HL
   | DAA                      -- decimal-adjust register A
   | CPL                      -- complement accumulator (A = ~A)
+  | ADDHLrr Register16       -- add the value contained in a 16 bit register to HL
+  | INCrr Register16         -- increment the value in a 16 bit register
+  | DECrr Register16         -- decrement the value in a 16 bit register 
+  | ADDSPn Int8              -- add the signed value8 to the stack pointer
+  | LDHLSPn Int8             -- load into hl the stack pointer + a value8
 
   -- RGBASM-specific convenience stuff.
   -- these would need revamping if we were to start generating native machine code
