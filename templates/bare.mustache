@@ -13,10 +13,3 @@ main:
 {{#body}}
 {{.}}
 {{/body}}
-call wait_vblank
-
-wait_vblank:
-    ldh a, [$FF44]
-    cp $91
-    jr nz, wait_vblank
-    ret
