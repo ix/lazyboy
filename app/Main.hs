@@ -2,7 +2,6 @@
 module Main where
 
 import           Control.Monad
-import           Control.Monad.Trans.RWS.Lazy
 import qualified Data.Text.Lazy.IO            as T
 import           Data.Word
 import           Lazyboy
