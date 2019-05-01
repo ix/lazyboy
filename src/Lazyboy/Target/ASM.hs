@@ -27,10 +27,10 @@ import           Text.Printf
 -- | Format Instructions as Strings
 instance Show Instruction where
     show (LDrr r1 r2) = printf "ld %s, %s" r1 r2
-    show (LDrn r1 v1) = printf "ld %s, $%X" r1 v1
+    show (LDrn r1 v1) = printf "ld %s, %d" r1 v1
     show (LDrHL r1)   = printf "ld %s, [HL]" r1
     show (LDHLr r1)   = printf "ld [HL], %s" r1
-    show (LDHLn v1)   = printf "ld [HL], $%X" v1
+    show (LDHLn v1)   = printf "ld [HL], %d" v1
     show (LDArr BC)   = printf "ld A, [BC]"
     show (LDArr DE)   = printf "ld A, [DE]"
     show (LDArr HL)   = printf "ld A, [HL]"
@@ -90,29 +90,29 @@ instance Show Instruction where
 
     -- arithmetic and comparisons
     show (ADDAr r1) = printf "add A, %s" r1
-    show (ADDAn v) = printf "add A, $%X" v
+    show (ADDAn v) = printf "add A, %d" v
     show (ADDHL) = printf "add A, [HL]"
     show (ADCAr r1) = printf "adc A, %s" r1 
-    show (ADCAn v) = printf "adc A, $%X" v
+    show (ADCAn v) = printf "adc A, %d" v
     show (ADCHL) = printf "adc A, [HL]"
     show (SUBAr r1) = printf "sub A, %s" r1
-    show (SUBAn v) = printf "sub A, $%X" v
+    show (SUBAn v) = printf "sub A, %d" v
     show (SUBHL) = printf "sub A, [HL]"
     show (SBCAr r1) = printf "sbc A, %s" r1 
-    show (SBCAn v) = printf "sbc A, $%X" v
+    show (SBCAn v) = printf "sbc A, %d" v
     show (SBCAHL) = printf "sbc A, [HL]"
     
     show (ANDr r1) = printf "and A, %s" r1
-    show (ANDn v) = printf "and A, $%X" v
+    show (ANDn v) = printf "and A, %d" v
     show (ANDHL) = printf "and A, [HL]"
     show (XORr r1) = printf "xor A, %s" r1
-    show (XORn v) = printf "xor A, $%X" v
+    show (XORn v) = printf "xor A, %d" v
     show (XORHL) = printf "xor A, [HL]"
     show (ORr r1) = printf "or A, %s" r1
-    show (ORn v) = printf "or A, $%X" v
+    show (ORn v) = printf "or A, %d" v
     show (ORHL) = printf "or A, [HL]"
     show (CPr r1) = printf "cp A, %s" r1
-    show (CPn v) = printf "cp A, $%X" v
+    show (CPn v) = printf "cp A, %d" v
     show (CPHL) = printf "cp A, [HL]"
     show (INCr r1) = printf "inc %s" r1
     show (INCHL) = printf "inc [HL]"

@@ -123,19 +123,19 @@ data Instruction =
 
   deriving (Read, Eq)
 
-withLabel :: Lazyboy () -> Lazyboy ()
+withLabel :: (Label -> Lazyboy ()) -> Lazyboy ()
 withLabel block = do
-  label <- get
+  label <- Global <$> get
   modify (+ 1) -- increment the label name counter
-  tell [LABEL $ Global label] 
-  block
+  tell [LABEL label] 
+  block label
 
-withLocalLabel :: Lazyboy () -> Lazyboy ()
+withLocalLabel :: (Label -> Lazyboy ()) -> Lazyboy ()
 withLocalLabel block = do
-  label <- get
+  label <- Local <$> get
   modify (+ 1) -- increment the label name counter
-  tell [LABEL $ Local label]
-  block
+  tell [LABEL label]
+  block label
 
 
 loop :: Lazyboy () -> Lazyboy ()

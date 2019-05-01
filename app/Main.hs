@@ -13,9 +13,13 @@ import           Lazyboy.Target.ASM
 main :: IO ()
 main = rom >>= T.putStrLn
     where rom = compileROM $ do
-            cond Zero $ do
-                loop $ do
-                    write 0xC0DE 0xDD
+            write wram1 0xC0
+            write (wram1 + 1) 0xDE
+            write (wram0 + 10) 0xFA
+            write (wram0 + 11) 0xCE
+            memcpy wram1 wram0 10
+            memcpy (wram0 + 10) (wram1 + 10) 10
+                
 
 -- repeat a series of instructions n times
 repeatOp :: Int -> Lazyboy () -> Lazyboy ()
