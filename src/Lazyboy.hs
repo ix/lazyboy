@@ -115,6 +115,26 @@ data Instruction =
   | ADDSPn Int8              -- add the signed value8 to the stack pointer
   | LDHLSPn Int8             -- load into hl the stack pointer + a value8
 
+  -- TODO: Rotate, Shift, Single-bit instructions
+  -- CPU control instructions
+  | CCF                      -- complement carry flag
+  | SCF                      -- set carry flag
+  | NOP                      -- no operation
+  | HALT                     -- halt until interrupt
+  | STOP                     -- standby mode
+  | DI                       -- disable interrupts
+  | EI                       -- enable interrupts
+
+  {-
+    ccf            3F           4 -00c cy=cy xor 1
+    scf            37           4 -001 cy=1
+    nop            00           4 ---- no operation
+    halt           76         N*4 ---- halt until interrupt occurs (low power)
+    stop           10 00        ? ---- low power standby mode (VERY low power)
+    di             F3           4 ---- disable interrupts, IME=0
+    ei             FB           4 ---- enable interrupts, IME=1
+  -}
+
   -- RGBASM-specific convenience stuff.
   -- these would need revamping if we were to start generating native machine code
   | LABEL Label               -- create a numbered label

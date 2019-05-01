@@ -136,6 +136,15 @@ instance Show Instruction where
     show (DECrr SP) = printf "dec SP"
     show (DECrr r1) = error "Cannot decrement the given 16 bit register" 
 
+    -- CPU control
+    show (CCF) = printf "ccf"
+    show (SCF) = printf "scf"
+    show (NOP) = printf "nop"
+    show (HALT) = printf "halt"
+    show (STOP) = printf "stop"
+    show (DI) = printf "di"
+    show (EI) = printf "ei"
+
     -- RGBASM specific stuff
     show (LABEL l) = printf "%s:" l
     show (JUMP l) = printf "jp %s" l
