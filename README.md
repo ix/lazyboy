@@ -1,5 +1,5 @@
 ![LAZYBOY](meta/logo.png)
-
+[![Build Status](https://travis-ci.org/ix/lazyboy.svg?branch=master)](https://travis-ci.org/ix/lazyboy)
 ---
 
 An embedded domain-specific language + compiler written in Haskell for producing code to run on the Nintendo Game Boy.
