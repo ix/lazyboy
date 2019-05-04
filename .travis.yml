@@ -22,3 +22,5 @@ install:
 
 script:
   - stack --no-terminal test --haddock --no-haddock-deps
+  - stack --no-terminal test --coverage
+  - bash < (curl -s https://codecov.io/bash)
