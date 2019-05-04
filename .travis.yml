@@ -7,5 +7,5 @@ ghc:
 script:
   - cabal configure --enable-tests --enable-library-coverage && cabal build && cabal test
 after_script:
-  - cabal install codecov-haskell
-  - codecov-haskell
+  - cabal install hpc-coveralls
+  - hpc-coveralls Spec
