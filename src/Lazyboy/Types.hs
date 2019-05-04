@@ -123,7 +123,27 @@ data Instruction =
   | RESnr Word8 Register8    -- unset bit n in register8
   | RESnHL Word8             -- unset bit n in the byte pointed by HL
 
-  -- [TODO] Rotate, Shift instructions
+  -- Rotate & shift instructions
+  | RLCA -- rotate accumulator left
+  | RLA  -- rotate accumulator left through carry
+  | RRCA -- rotate accumulator right
+  | RRA  -- rotate accumulator rit through carry
+  | RLC Register8 -- rotate left
+  | RLCHL -- rotate value contained at address in HL left
+  | RL Register8 -- rotate left through carry
+  | RLHL -- rotate value contained at address in HL left through carry
+  | RRC Register8 -- rotate right
+  | RRCHL -- rotate value contained at address in HL right
+  | RR Register8 -- rotate right through carry
+  | RRHL -- rotate value contained at address in HL right through carry 
+  | SLA Register8 -- shift left arithmetic
+  | SLAHL -- shift left arithmetic (HL pointer)
+  | SWAP Register8 -- exchange low and high nibbles
+  | SWAPHL -- exchange low and high nibbles in HL pointer
+  | SRA Register8 -- shift right arithmetic
+  | SRAHL -- shift right arithmetic in HL pointer
+  | SRL Register8 -- shift right logical
+  | SRLHL -- shift right logical in HL pointer
 
   -- CPU control instructions
   | CCF                      -- complement carry flag
