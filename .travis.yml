@@ -1,24 +1,11 @@
 sudo: false
 
-language: c
-
-cache:
-  directories:
-    - ~/.stack
-
-addons:
-  apt:
-    packages:
-      - libgmp-dev
-
-before_install:
-  # Download and unpack the stack executable
-  - mkdir -p ~/.local/bin
-  - export PATH=$HOME/.local/bin:$PATH
-  - travis_retry curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'
-
-install:
-  - stack --no-terminal --install-ghc test --only-dependencies
+language: haskell
+ghc:
+  - "8.6.4"
 
 script:
-  - stack --no-terminal test --haddock --no-haddock-deps
+  - cabal configure --enable-tests --enable-library-coverage && cabal build && cabal test
+after_script:
+  - cabal install codecov-haskell
+  - codecov-haskell
