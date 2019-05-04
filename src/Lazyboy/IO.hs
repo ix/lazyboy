@@ -29,6 +29,9 @@ data LCDState = LCDState { lcdDisplayEnable       :: Bool
                          , lcdBackgroundEnable    :: Bool
                          }
 
+defaultLCDState :: LCDState
+defaultLCDState = LCDState False False False False False False False False
+
 pack :: LCDState -> Word8
 pack lcds = zeroBits .|. lcdDE .|. lcdWTM .|. lcdEWD .|. lcdWS .|. lcdTMS .|. lcdOS .|. lcdEO .|. lcdBE
     where lcdDE  = if lcdDisplayEnable lcds       then 0b10000000 else 0

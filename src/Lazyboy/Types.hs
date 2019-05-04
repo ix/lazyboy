@@ -123,7 +123,7 @@ data Instruction =
   | RESnr Word8 Register8    -- unset bit n in register8
   | RESnHL Word8             -- unset bit n in the byte pointed by HL
 
-  -- TODO: Rotate, Shift instructions
+  -- [TODO] Rotate, Shift instructions
 
   -- CPU control instructions
   | CCF                      -- complement carry flag

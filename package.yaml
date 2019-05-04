@@ -28,6 +28,7 @@ dependencies:
 - microstache 
 - aeson
 - text
+- hspec
 
 library:
   source-dirs: src

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 7ed3a73d249333a59ba86c1bbc338254b2d63736ddf9c1377604cb5c9b58dfd4
+-- hash: 1b57a3db7725ad6db346b5c03653a8f1643741cf4d069c0888124c97f1c60ff5
 
 name:           lazyboy
 version:        0.1.0.0
@@ -42,6 +42,7 @@ library
   build-depends:
       aeson
     , base >=4.7 && <5
+    , hspec
     , microstache
     , text
     , transformers
@@ -57,6 +58,7 @@ executable lazyboy
   build-depends:
       aeson
     , base >=4.7 && <5
+    , hspec
     , lazyboy
     , microstache
     , text
@@ -74,6 +76,7 @@ test-suite lazyboy-test
   build-depends:
       aeson
     , base >=4.7 && <5
+    , hspec
     , lazyboy
     , microstache
     , text
