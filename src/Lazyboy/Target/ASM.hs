@@ -136,6 +136,28 @@ instance Show Instruction where
     show (DECrr SP) = printf "dec SP"
     show (DECrr r1) = error "Cannot decrement the given 16 bit register"
 
+    -- Rotate & shift
+    show (RLCA) = printf "rlca"
+    show (RLA) = printf "rla"
+    show (RRCA) = printf "rrca"
+    show (RRA) = printf "rra"
+    show (RLC r1) = printf "rlc %s" r1
+    show (RLCHL) = printf "rlc [HL]"
+    show (RL r1) = printf "rl %s" r1
+    show (RLHL) = printf "rl [HL]"
+    show (RRC r1) = printf "rrc %s" r1
+    show (RRCHL) = printf "rrc [HL]"
+    show (RR r1) = printf "rr %s" r1
+    show (RRHL) = printf "rr [HL]"
+    show (SLA r1) = printf "sla %s" r1
+    show (SLAHL) = printf "sla [HL]"
+    show (SWAP r1) = printf "swap %s" r1
+    show (SWAPHL) = printf "swap [HL]"
+    show (SRA r1) = printf "sra %s" r1
+    show (SRAHL) = printf "sra [HL]"
+    show (SRL r1) = printf "srl %s" r1
+    show (SRLHL) = printf "srl [HL]"
+
     -- CPU control
     show (CCF) = printf "ccf"
     show (SCF) = printf "scf"

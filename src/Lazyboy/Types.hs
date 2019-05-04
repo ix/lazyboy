@@ -135,7 +135,7 @@ data Instruction =
   | RRC Register8 -- rotate right
   | RRCHL -- rotate value contained at address in HL right
   | RR Register8 -- rotate right through carry
-  | RRHL -- rotate value contained at address in HL right through carry 
+  | RRHL -- rotate value contained at address in HL right through carry
   | SLA Register8 -- shift left arithmetic
   | SLAHL -- shift left arithmetic (HL pointer)
   | SWAP Register8 -- exchange low and high nibbles
