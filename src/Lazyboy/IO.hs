@@ -10,7 +10,7 @@
     This module defines abstract IO operations for Lazyboy.
 -}
 
-{-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE BinaryLiterals  #-}
 {-# LANGUAGE RecordWildCards #-}
 module Lazyboy.IO where
 
@@ -58,25 +58,27 @@ instance Bitfield LCDState where
                 lcdTMS = if lcdTileMapSelect lcds       then 0b00001000 else 0
                 lcdOS  = if lcdObjSize lcds             then 0b00000100 else 0
                 lcdEO  = if lcdEnableObjects lcds       then 0b00000010 else 0
-                lcdBE  = if lcdBackgroundEnable lcds    then 0b00000001 else 0 
+                lcdBE  = if lcdBackgroundEnable lcds    then 0b00000001 else 0
 
 
--- | A type representing the background palette                
+-- | A type representing the background palette
 data BackgroundPalette = BackgroundPalette { bgpColor3 :: Color
                                            , bgpColor2 :: Color
                                            , bgpColor1 :: Color
                                            , bgpColor0 :: Color
                                            }
-                                           
+
+defaultPalette :: BackgroundPalette
+defaultPalette = BackgroundPalette Black Dark Light White
 
 -- | Instance of Bitfield for BackgroundPalette
 instance Bitfield BackgroundPalette where
     pack BackgroundPalette {..} = zeroBits .|. zero .|. one .|. two .|. three
-        where zero = pack bgpColor0
-              one = pack bgpColor1 `shiftL` 2
-              two = pack bgpColor2 `shiftL` 4
+        where zero  = pack bgpColor0
+              one   = pack bgpColor1 `shiftL` 2
+              two   = pack bgpColor2 `shiftL` 4
               three = pack bgpColor3 `shiftL` 6
-    
+
 -- | Write a byte to a register
 byte :: Register8 -> Word8 -> Lazyboy ()
 byte reg val = tell [LDrn reg val]
