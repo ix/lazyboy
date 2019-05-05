@@ -26,6 +26,12 @@ main = hspec $ do
             pack (LCDState True False False False False False False True) `shouldBe` 129
         it "packs other LCDStates correctly" $ do
             pack (defaultLCDState { lcdEnableObjects = True }) `shouldBe` 2
+        it "packs a BackgroundPalette of all-black to 255" $ do
+            pack (BackgroundPalette Black Black Black Black) `shouldBe` 255
+        it "packs a BackgroundPalette of all-white to 0" $ do
+            pack (BackgroundPalette White White White White) `shouldBe` 0
+        it "correctly packs other BackgroundPalettes" $ do
+            pack (BackgroundPalette White Light White White) `shouldBe` 16
 
     describe "Lazyboy.Types.execLazyboy" $ do
         it "compiles nested sequences in order" $ do

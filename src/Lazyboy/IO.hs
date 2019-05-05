@@ -11,6 +11,7 @@
 -}
 
 {-# LANGUAGE BinaryLiterals #-}
+{-# LANGUAGE RecordWildCards #-}
 module Lazyboy.IO where
 
 import           Control.Monad.Trans.RWS.Lazy
@@ -19,6 +20,21 @@ import           Data.Word
 import           Lazyboy.Control
 import           Lazyboy.Types
 
+-- | A typeclass for packing types into Word8
+class Bitfield a where
+    pack :: a -> Word8
+
+-- | A type representing the monochrome shades available
+data Color = White | Light | Dark | Black
+    deriving (Eq, Ord)
+
+instance Bitfield Color where
+    pack White = 0b00
+    pack Light = 0b01
+    pack Dark  = 0b10
+    pack Black = 0b11
+
+-- | A type representing the LCD state
 data LCDState = LCDState { lcdDisplayEnable       :: Bool
                          , lcdWindowTileMap       :: Bool
                          , lcdEnableWindowDisplay :: Bool
@@ -32,10 +48,6 @@ data LCDState = LCDState { lcdDisplayEnable       :: Bool
 defaultLCDState :: LCDState
 defaultLCDState = LCDState False False False False False False False False
 
--- | A typeclass for packing types into Word8
-class Bitfield a where
-    pack :: a -> Word8
-
 -- | Instance of Bitfield for LCDState
 instance Bitfield LCDState where
     pack lcds = zeroBits .|. lcdDE .|. lcdWTM .|. lcdEWD .|. lcdWS .|. lcdTMS .|. lcdOS .|. lcdEO .|. lcdBE
@@ -48,7 +60,24 @@ instance Bitfield LCDState where
                 lcdEO  = if lcdEnableObjects lcds       then 0b00000010 else 0
                 lcdBE  = if lcdBackgroundEnable lcds    then 0b00000001 else 0 
 
--- | Loads an 8-bit immediate value into an 8-bit register
+
+-- | A type representing the background palette                
+data BackgroundPalette = BackgroundPalette { bgpColor3 :: Color
+                                           , bgpColor2 :: Color
+                                           , bgpColor1 :: Color
+                                           , bgpColor0 :: Color
+                                           }
+                                           
+
+-- | Instance of Bitfield for BackgroundPalette
+instance Bitfield BackgroundPalette where
+    pack BackgroundPalette {..} = zeroBits .|. zero .|. one .|. two .|. three
+        where zero = pack bgpColor0
+              one = pack bgpColor1 `shiftL` 2
+              two = pack bgpColor2 `shiftL` 4
+              three = pack bgpColor3 `shiftL` 6
+    
+-- | Write a byte to a register
 byte :: Register8 -> Word8 -> Lazyboy ()
 byte reg val = tell [LDrn reg val]
 
