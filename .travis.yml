@@ -6,10 +6,9 @@ ghc:
 
 script:
   - cabal configure --enable-tests --enable-library-coverage && cabal build && cabal test
-  - cabal configure --enable-tests --enable-library-coverage
   - cabal build
   - cabal test --show-details=always
 
-after_script:
+after_success:
   - cabal install hpc-coveralls
-  - cabal exec hpc-coveralls --coverage-mode=StrictlyFullLines --exclude-dir=test test-all
+  - ~/.cabal/bin/hpc-coveralls --coverage-mode=StrictlyFullLines --exclude-dir=test test-all
