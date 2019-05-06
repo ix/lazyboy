@@ -42,23 +42,43 @@ main = hspec $ do
                     write 0x1000 0x98
             sequence `shouldBe` [LDrrnn HL 0x2000, LDHLn 0x97, LDrrnn HL 0x1000, LDHLn 0x98]
 
-    describe "Lazyboy.Control.cond" $ do
-        it "correctly implements conditionals" $ do
-            let program = execLazyboy $ do 
-                    cond NonZero $ do
-                        freeze
-            program `shouldBe` [JUMPif NonZero $ Local 1, LABEL $ Local 2, JUMP $ Local 2, LABEL $ Local 1]
-        it "handles nested conditionals correctly" $ do
-            let program = execLazyboy $ do
-                    cond Zero $ do
+    describe "Lazyboy.Control" $ do
+        describe "cond" $ do
+            it "correctly implements conditionals" $ do
+                let program = execLazyboy $ do
                         cond NonZero $ do
                             freeze
-            program `shouldBe` [ JUMPif Zero $ Local 1
-                               , JUMPif NonZero $ Local 2
-                               , LABEL $ Local 3
-                               , JUMP $ Local 3
-                               , LABEL $ Local 2
-                               , LABEL $ Local 1 ]
+                program `shouldBe` [JUMPif NonZero $ Local 1, LABEL $ Local 2, JUMP $ Local 2, LABEL $ Local 1]
+            it "handles nested conditionals correctly" $ do
+                let program = execLazyboy $ do
+                        cond Zero $ do
+                            cond NonZero $ do
+                                freeze
+                program `shouldBe` [ JUMPif Zero $ Local 1
+                                , JUMPif NonZero $ Local 2
+                                , LABEL $ Local 3
+                                , JUMP $ Local 3
+                                , LABEL $ Local 2
+                                , LABEL $ Local 1 
+                                ]
+        describe "withLabel" $ do
+            it "creates an appropriately formatted global label" $ do
+                let program = map show $ execLazyboy $ do
+                        withLabel $ \label -> do
+                            write 0xC000 0x97
+                program `shouldBe` [ "L1:"
+                                   , "ld HL, $C000"
+                                   , "ld [HL], 151"
+                                   ]
+        describe "withLocalLabel" $ do
+            it "creates an appropriately formatted local label" $ do
+                let program = map show $ execLazyboy $ do
+                        withLocalLabel $ \label -> do
+                            write 0xC000 0x97
+                program `shouldBe` [ ".L1:"
+                                   , "ld HL, $C000"
+                                   , "ld [HL], 151"
+                                   ]
 
     describe "Prelude.show" $ do
         it "disallows loading [AF] into A" $ do
