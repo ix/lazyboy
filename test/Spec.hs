@@ -40,6 +40,24 @@ main = hspec $ do
                     write 0x1000 0x98
             sequence `shouldBe` [LDrrnn HL 0x2000, LDHLn 0x97, LDrrnn HL 0x1000, LDHLn 0x98]
 
+    describe "Lazyboy.Control.cond" $ do
+        it "correctly implements conditionals" $ do
+            let program = execLazyboy $ do 
+                    cond NonZero $ do
+                        freeze
+            program `shouldBe` [JUMPif NonZero $ Local 1, LABEL $ Local 2, JUMP $ Local 2, LABEL $ Local 1]
+        it "handles nested conditionals correctly" $ do
+            let program = execLazyboy $ do
+                    cond Zero $ do
+                        cond NonZero $ do
+                            freeze
+            program `shouldBe` [ JUMPif Zero $ Local 1
+                               , JUMPif NonZero $ Local 2
+                               , LABEL $ Local 3
+                               , JUMP $ Local 3
+                               , LABEL $ Local 2
+                               , LABEL $ Local 1 ]
+
     describe "Prelude.show" $ do
         it "disallows loading [AF] into A" $ do
             disallow (show $ LDArr AF)
