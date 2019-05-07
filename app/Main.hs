@@ -11,7 +11,8 @@ main :: IO ()
 main = rom >>= T.putStrLn
     where rom = compileROM $ do
             smiley <- embedBytes image
-            memcpy (Name smiley) (Address vram) $ fromIntegral $ length image
+            memcpy (Name smiley) (Address $ 0x9000 + 16) $ fromIntegral $ length image
+            tell [LDrrnn HL (Address 0x9800), LDHLn 1]
             setBackgroundPalette defaultPalette
             setLCDControl $ defaultLCDControl { lcdDisplayEnable = True, lcdBackgroundEnable = True }
             freeze

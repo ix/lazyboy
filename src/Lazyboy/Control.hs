@@ -48,20 +48,28 @@ withLocalLabel block = do
 embedFile :: FilePath -> Lazyboy Label
 embedFile file = do
     label <- getGlobalLabel 
+    skipLabel <- getGlobalLabel
+    tell [JP $ Name skipLabel]
     tell [LABEL label, INCLUDE file]
+    tell [LABEL skipLabel]
     return label
 
 -- | Embed an image and return a (global) label for it.
 embedImage = embedFile
 
 -- | Embed a sequence of bytes into the file and return a (global) label for it.
+-- A jump over the block of data is added to prevent the image data being executed.
 embedBytes :: [Word8] -> Lazyboy Label
 embedBytes bytes = do
-  label <- getGlobalLabel 
+  label <- getGlobalLabel
+  skipLabel <- getGlobalLabel
+  tell [JP $ Name skipLabel]
   tell [LABEL label, BYTES bytes]
+  tell [LABEL skipLabel]
   return label
 
 -- | Suspend execution indefinitely by jumping infinitely.
+-- A jump over the block of data is added to prevent the image data being executed.
 freeze :: Lazyboy ()
 freeze = loop $ return ()
   where loop block = do
