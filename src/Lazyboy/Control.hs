@@ -16,27 +16,38 @@ import           Control.Monad.Trans.RWS
 import           Data.Word
 import           Lazyboy.Types
 
+-- | Get a label, and in the process increment the counter used to track labels.
+-- this provides a safe interface to label retrieval and utilization.
+getLabel :: Lazyboy Integer
+getLabel = do 
+  label <- get
+  modify (+ 1)
+  return label
+
+getLocalLabel :: Lazyboy Label
+getLocalLabel = Local <$> getLabel
+
+getGlobalLabel :: Lazyboy Label
+getGlobalLabel = Global <$> getLabel
+
 -- | Execute an action within a global label and pass the action the label.
 withLabel :: (Label -> Lazyboy ()) -> Lazyboy ()
 withLabel block = do
-  label <- Global <$> get
-  modify (+ 1) -- increment the label name counter
+  label <- getGlobalLabel
   tell [LABEL label]
   block label
 
 -- | Execute an action within a local label and pass the action the label.
 withLocalLabel :: (Label -> Lazyboy ()) -> Lazyboy ()
 withLocalLabel block = do
-  label <- Local <$> get
-  modify (+ 1) -- increment the label name counter
+  label <- getLocalLabel 
   tell [LABEL label]
   block label
 
 -- | Embed a file and return a (global) label for it.
 embedFile :: FilePath -> Lazyboy Label
 embedFile file = do
-    label <- Global <$> get
-    modify (+ 1)
+    label <- getGlobalLabel 
     tell [LABEL label, INCLUDE file]
     return label
 
@@ -46,8 +57,7 @@ embedImage = embedFile
 -- | Embed a sequence of bytes into the file and return a (global) label for it.
 embedBytes :: [Word8] -> Lazyboy Label
 embedBytes bytes = do
-  label <- Global <$> get
-  modify (+ 1)
+  label <- getGlobalLabel 
   tell [LABEL label, BYTES bytes]
   return label
 
@@ -55,8 +65,7 @@ embedBytes bytes = do
 freeze :: Lazyboy ()
 freeze = loop $ return ()
   where loop block = do
-          label <- Local <$> get
-          modify (+ 1)
+          label <- getLocalLabel 
           tell [LABEL label]
           block
           tell [JUMP label]
@@ -64,8 +73,7 @@ freeze = loop $ return ()
 -- | Executes the given action provided condition flag is set.
 cond :: Condition -> Lazyboy () -> Lazyboy ()
 cond condition block = do
-  label <- Local <$> get
-  modify (+ 1)
+  label <- getLocalLabel 
   tell [JUMPif condition label]
   block
   tell [LABEL label]
