@@ -95,4 +95,3 @@ memcpy src dest len = do
     withLocalLabel $ \label -> do
         tell [LDAHLI] -- load a byte from [HL] into A and increment
         tell [LDrrA DE, INCrr DE, DECr B, JUMPif NonZero label]
-

@@ -13,6 +13,7 @@
 module Lazyboy.Control where
 
 import           Control.Monad.Trans.RWS
+import           Data.Word
 import           Lazyboy.Types
 
 -- | Execute an action within a global label and pass the action the label.
@@ -30,6 +31,23 @@ withLocalLabel block = do
   modify (+ 1) -- increment the label name counter
   tell [LABEL label]
   block label
+
+-- | Embed a file and return a (global) label for it.
+embedFile :: FilePath -> Lazyboy Label
+embedFile file = do
+    label <- Global <$> get
+    tell [LABEL label, INCLUDE file]
+    return label
+
+-- | Embed an image and return a (global) label for it.
+embedImage = embedFile
+
+-- | Embed a sequence of bytes into the file and return a (global) label for it.
+embedBytes :: [Word8] -> Lazyboy Label
+embedBytes bytes = do
+  label <- Global <$> get
+  tell [LABEL label, BYTES bytes]
+  return label
 
 -- | Suspend execution indefinitely by jumping infinitely.
 freeze :: Lazyboy ()

@@ -79,45 +79,57 @@ main = hspec $ do
                                    , "ld HL, $C000"
                                    , "ld [HL], 151"
                                    ]
+        describe "embedImage" $ do
+            it "leverages RGBASM to include a binary" $ do
+                let program = execLazyboy $ embedImage "test.bin"
+                program `shouldBe` [LABEL $ Global 1, INCLUDE "test.bin"]
+        describe "embedBytes" $ do
+            it "defines a raw sequence of bytes" $ do
+                let program = execLazyboy $ embedBytes [0x00, 0x01, 0x02]
+                program `shouldBe` [LABEL $ Global 1, BYTES [0x00, 0x01, 0x02]]
 
-    describe "Prelude.show" $ do
-        it "disallows loading [AF] into A" $ do
-            disallow (show $ LDArr AF)
-        it "disallows loading [SP] into A" $ do
-            disallow (show $ LDArr SP)
-        it "disallows loading [PC] into A" $ do
-            disallow (show $ LDArr PC)
-        it "disallows loading A into [AF]" $ do
-            disallow (show $ LDrrA AF)
-        it "disallows loading A into [SP]" $ do
-            disallow (show $ LDrrA SP)
-        it "disallows loading A into [PC]" $ do
-            disallow (show $ LDrrA PC)
-        it "disallows loading a 16 bit value into AF" $ do
-            disallow (show $ LDrrnn AF 0x00)
-        it "disallows loading a 16 bit value into PC" $ do
-            disallow (show $ LDrrnn PC 0x00)
-        it "disallows pushing stack pointer" $ do
-            disallow (show $ PUSH SP)
-        it "disallows pushing program counter" $ do
-            disallow (show $ PUSH PC)
-        it "disallows popping stack pointer" $ do
-            disallow (show $ POP SP)
-        it "disallows popping program counter" $ do
-            disallow (show $ POP PC)
-        it "disallows an invalid RST vector value" $ do
-            disallow (show $ RST 0x02)
-        it "disallows adding AF to HL" $ do
-            disallow (show $ ADDHLrr AF)
-        it "disallows adding PC to HL" $ do
-            disallow (show $ ADDHLrr PC)
-        it "disallows incrementing AF" $ do
-            disallow (show $ INCrr AF)
-        it "disallows incrementing PC" $ do
-            disallow (show $ INCrr PC)
-        it "disallows decrementing AF" $ do
-            disallow (show $ DECrr AF)
-        it "disallows decrementing PC" $ do
-            disallow (show $ DECrr PC)
-        it "enforces only 3-bit values can be passed to BIT instructions" $ do
-            disallow (show $ BITnr 0x80 A)
+    describe "Lazyboy.Target.ASM" $ do
+        describe "show" $ do
+            it "disallows loading [AF] into A" $ do
+                disallow (show $ LDArr AF)
+            it "disallows loading [SP] into A" $ do
+                disallow (show $ LDArr SP)
+            it "disallows loading [PC] into A" $ do
+                disallow (show $ LDArr PC)
+            it "disallows loading A into [AF]" $ do
+                disallow (show $ LDrrA AF)
+            it "disallows loading A into [SP]" $ do
+                disallow (show $ LDrrA SP)
+            it "disallows loading A into [PC]" $ do
+                disallow (show $ LDrrA PC)
+            it "disallows loading a 16 bit value into AF" $ do
+                disallow (show $ LDrrnn AF 0x00)
+            it "disallows loading a 16 bit value into PC" $ do
+                disallow (show $ LDrrnn PC 0x00)
+            it "disallows pushing stack pointer" $ do
+                disallow (show $ PUSH SP)
+            it "disallows pushing program counter" $ do
+                disallow (show $ PUSH PC)
+            it "disallows popping stack pointer" $ do
+                disallow (show $ POP SP)
+            it "disallows popping program counter" $ do
+                disallow (show $ POP PC)
+            it "disallows an invalid RST vector value" $ do
+                disallow (show $ RST 0x02)
+            it "disallows adding AF to HL" $ do
+                disallow (show $ ADDHLrr AF)
+            it "disallows adding PC to HL" $ do
+                disallow (show $ ADDHLrr PC)
+            it "disallows incrementing AF" $ do
+                disallow (show $ INCrr AF)
+            it "disallows incrementing PC" $ do
+                disallow (show $ INCrr PC)
+            it "disallows decrementing AF" $ do
+                disallow (show $ DECrr AF)
+            it "disallows decrementing PC" $ do
+                disallow (show $ DECrr PC)
+            it "enforces only 3-bit values can be passed to BIT instructions" $ do
+                disallow (show $ BITnr 0x80 A)
+            it "formats embedded byte sequences correctly" $ do
+                let program = map show $ execLazyboy $ tell [BYTES [97, 98]]
+                program `shouldBe` ["db $61,$62" ]
