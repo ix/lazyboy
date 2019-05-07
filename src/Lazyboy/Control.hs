@@ -36,6 +36,7 @@ withLocalLabel block = do
 embedFile :: FilePath -> Lazyboy Label
 embedFile file = do
     label <- Global <$> get
+    modify (+ 1)
     tell [LABEL label, INCLUDE file]
     return label
 
@@ -46,6 +47,7 @@ embedImage = embedFile
 embedBytes :: [Word8] -> Lazyboy Label
 embedBytes bytes = do
   label <- Global <$> get
+  modify (+ 1)
   tell [LABEL label, BYTES bytes]
   return label
 
