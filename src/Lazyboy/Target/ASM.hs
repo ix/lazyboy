@@ -66,9 +66,9 @@ instance Show Instruction where
     show (POP r1) = printf "POP %s" r1
 
     -- jumps
-    show (JP v1) = printf "jp $%X" v1
+    show (JP v1) = printf "jp %s" v1
     show (JPHL) = printf "jp HL"
-    show (JPif c v1) = printf "jp %s, $%X" c v1
+    show (JPif c v1) = printf "jp %s, %s" c v1
     show (JRPC v1) = printf "jr %d" v1
     show (JRPCif c v1) = printf "jr %s, $%X" c v1
 
