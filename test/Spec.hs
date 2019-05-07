@@ -20,13 +20,13 @@ disallow cmd = evaluate cmd `shouldThrow` anyException
 main :: IO ()
 main = hspec $ do
     describe "Lazyboy.IO" $ do
-        context "when asked to pack an LCDState" $ do
-            it "packs an LCDState of all False values to 0" $ do
-                pack defaultLCDState `shouldBe` 0
-            it "packs an LCDState with background and display enabled to 129" $ do
-                pack (LCDState True False False False False False False True) `shouldBe` 129
-            it "packs other LCDStates correctly" $ do
-                pack (defaultLCDState { lcdEnableObjects = True }) `shouldBe` 2
+        context "when asked to pack an LCDControl" $ do
+            it "packs an LCDControl of all False values to 0" $ do
+                pack defaultLCDControl `shouldBe` 0
+            it "packs an LCDControl with background and display enabled to 129" $ do
+                pack (LCDControl True False False False False False False True) `shouldBe` 129
+            it "packs other LCDControls correctly" $ do
+                pack (defaultLCDControl { lcdEnableObjects = True }) `shouldBe` 2
         context "when asked to pack a BackgroundPalette" $ do
             it "packs a BackgroundPalette of all-black to 255" $ do
                 pack (BackgroundPalette Black Black Black Black) `shouldBe` 255

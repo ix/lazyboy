@@ -17,6 +17,7 @@ module Lazyboy.IO where
 import           Control.Monad.Trans.RWS.Lazy
 import           Data.Bits
 import           Data.Word
+import           Lazyboy.Constants
 import           Lazyboy.Control
 import           Lazyboy.Types
 
@@ -35,7 +36,7 @@ instance Bitfield Color where
     pack Black = 0b11
 
 -- | A type representing the LCD state
-data LCDState = LCDState { lcdDisplayEnable       :: Bool
+data LCDControl = LCDControl { lcdDisplayEnable       :: Bool
                          , lcdWindowTileMap       :: Bool
                          , lcdEnableWindowDisplay :: Bool
                          , lcdWindowSelect        :: Bool
@@ -45,11 +46,11 @@ data LCDState = LCDState { lcdDisplayEnable       :: Bool
                          , lcdBackgroundEnable    :: Bool
                          }
 
-defaultLCDState :: LCDState
-defaultLCDState = LCDState False False False False False False False False
+defaultLCDControl :: LCDControl
+defaultLCDControl = LCDControl False False False False False False False False
 
--- | Instance of Bitfield for LCDState
-instance Bitfield LCDState where
+-- | Instance of Bitfield for LCDControl
+instance Bitfield LCDControl where
     pack lcds = zeroBits .|. lcdDE .|. lcdWTM .|. lcdEWD .|. lcdWS .|. lcdTMS .|. lcdOS .|. lcdEO .|. lcdBE
           where lcdDE  = if lcdDisplayEnable lcds       then 0b10000000 else 0
                 lcdWTM = if lcdWindowTileMap lcds       then 0b01000000 else 0
@@ -60,6 +61,8 @@ instance Bitfield LCDState where
                 lcdEO  = if lcdEnableObjects lcds       then 0b00000010 else 0
                 lcdBE  = if lcdBackgroundEnable lcds    then 0b00000001 else 0
 
+setLCDControl :: LCDControl -> Lazyboy ()
+setLCDControl lcd = write lcdc $ pack lcd 
 
 -- | A type representing the background palette
 data BackgroundPalette = BackgroundPalette { bgpColor3 :: Color
@@ -78,6 +81,9 @@ instance Bitfield BackgroundPalette where
               one   = pack bgpColor1 `shiftL` 2
               two   = pack bgpColor2 `shiftL` 4
               three = pack bgpColor3 `shiftL` 6
+
+setBackgroundPalette :: BackgroundPalette -> Lazyboy ()
+setBackgroundPalette pal = write bgp $ pack pal
 
 -- | Write a byte to a register
 byte :: Register8 -> Word8 -> Lazyboy ()
