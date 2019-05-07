@@ -54,3 +54,6 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - lazyboy 
+
+
+ghc-options: ["-optP-Wno-nonportable-include-path"]

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1b57a3db7725ad6db346b5c03653a8f1643741cf4d069c0888124c97f1c60ff5
+-- hash: 84c217448ac148dc958befa1bb459b81dd64252f634cbb312eea46a47b042f71
 
 name:           lazyboy
 version:        0.1.0.0
@@ -39,6 +39,7 @@ library
       Paths_lazyboy
   hs-source-dirs:
       src
+  ghc-options: -optP-Wno-nonportable-include-path
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -54,7 +55,7 @@ executable lazyboy
       Paths_lazyboy
   hs-source-dirs:
       app
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -optP-Wno-nonportable-include-path -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5
@@ -72,7 +73,7 @@ test-suite lazyboy-test
       Paths_lazyboy
   hs-source-dirs:
       test
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -optP-Wno-nonportable-include-path -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
     , base >=4.7 && <5
