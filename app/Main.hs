@@ -2,7 +2,7 @@
 module Main where
 
 import           Control.Monad
-import qualified Data.Text.Lazy.IO            as T
+import qualified Data.Text.Lazy.IO  as T
 import           Data.Word
 import           Lazyboy
 import           Lazyboy.Target.ASM
@@ -10,13 +10,14 @@ import           Lazyboy.Target.ASM
 main :: IO ()
 main = rom >>= T.putStrLn
     where rom = compileROM $ do
-            write wram1 0xC0
-            write (wram1 + 1) 0xDE
-            write (wram0 + 10) 0xFA
-            write (wram0 + 11) 0xCE
-            memcpy wram1 wram0 10
-            memcpy (wram0 + 10) (wram1 + 10) 10
+            smiley <- embedBytes image
+            memcpy (Name smiley) (Address vram) $ fromIntegral $ length image
+            setBackgroundPalette defaultPalette
+            setLCDControl $ defaultLCDControl { lcdDisplayEnable = True, lcdBackgroundEnable = True }
             freeze
+
+          image :: [Word8]
+          image = [0x00, 0x00, 0x00, 0x00, 0x24, 0x24, 0x00, 0x00, 0x81, 0x81, 0x7e, 0x7e, 0x00, 0x00, 0x00, 0x00]
 
 
 -- repeat a series of instructions n times

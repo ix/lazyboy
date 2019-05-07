@@ -26,6 +26,10 @@ type Lazyboy a = RWS () [Instruction] Integer a
 execLazyboy :: Lazyboy a -> [Instruction]
 execLazyboy m = snd $ execRWS m () 1
 
+-- | An address or label
+data Location = Address Word16 | Name Label
+  deriving (Read, Show, Eq)
+
 -- | Condition codes
 data Condition = Zero | NonZero | Carry | NoCarry
   deriving (Read, Show, Eq)
@@ -43,41 +47,41 @@ data Label = Local Integer | Global Integer
 
 -- | GB Opcodes and other special forms
 data Instruction =
-    LDrr Register8 Register8 -- load the value in one register8 into another
-  | LDrn Register8 Word8     -- load the immediate value8 into a register8
-  | LDrHL Register8          -- load the value8 stored at the address in HL into a register8
-  | LDHLr Register8          -- load the value8 stored in a register8 into the address in HL
-  | LDHLn Word8              -- load the immediate value8 into the address in HL
-  | LDArr Register16         -- load the value at the address contained in a 16 bit register into A
-  | LDrrA Register16         -- laod A into the address contained in a 16 bit register
-  | LDAnn Word16             -- load the value8 stored in the value16 address into A
-  | LDnnA Word16             -- load the value8 stored in A into the value16 address
-  | LDAIO Word8              -- read into A from IO port n (FF00 + value8)
-  | LDIOA Word8              -- store value8 in A into IO port n (FF00 + value8)
-  | LDAIOC                   -- read from IO port FF00+c into A
-  | LDIOCA                   -- store the value8 in A into IO port FF00+C
-  | LDHLAI                   -- store value in register A into byte pointed by HL and post-increment HL
-  | LDAHLI                   -- store value in address in HL in A and post-increment HL
-  | LDHLAD                   -- store value in register A into byte pointed by HL and post-decrement HL.
-  | LDAHLD                   -- store value in address in HL in A and post-decrement HL
-  | LDrrnn Register16 Word16 -- load the value16 address into the register16
-  | LDSPHL                   -- set the stack pointer to the value in HL
-  | PUSH Register16          -- push register16 onto the stack
-  | POP Register16           -- pop register16 from the stack
+    LDrr Register8 Register8   -- load the value in one register8 into another
+  | LDrn Register8 Word8       -- load the immediate value8 into a register8
+  | LDrHL Register8            -- load the value8 stored at the address in HL into a register8
+  | LDHLr Register8            -- load the value8 stored in a register8 into the address in HL
+  | LDHLn Word8                -- load the immediate value8 into the address in HL
+  | LDArr Register16           -- load the value at the address contained in a 16 bit register into A
+  | LDrrA Register16           -- laod A into the address contained in a 16 bit register
+  | LDAnn Location             -- load the value8 stored in the value16 address into A
+  | LDnnA Location             -- load the value8 stored in A into the value16 address
+  | LDAIO Word8                -- read into A from IO port n (FF00 + value8)
+  | LDIOA Word8                -- store value8 in A into IO port n (FF00 + value8)
+  | LDAIOC                     -- read from IO port FF00+c into A
+  | LDIOCA                     -- store the value8 in A into IO port FF00+C
+  | LDHLAI                     -- store value in register A into byte pointed by HL and post-increment HL
+  | LDAHLI                     -- store value in address in HL in A and post-increment HL
+  | LDHLAD                     -- store value in register A into byte pointed by HL and post-decrement HL.
+  | LDAHLD                     -- store value in address in HL in A and post-decrement HL
+  | LDrrnn Register16 Location -- load the value16 address into the register16
+  | LDSPHL                     -- set the stack pointer to the value in HL
+  | PUSH Register16            -- push register16 onto the stack
+  | POP Register16             -- pop register16 from the stack
 
   -- Jump & Call instructions
-  | JPnn Word16              -- immediately jump to value16
-  | JPHL                     -- immediately jump to the value contained in HL
-  | JPif Condition Word16    -- conditional jump to value16
-  | JRPC Int8                -- relative jump by adding signed value8 to program counter
-  | JRPCif Condition Int8    -- conditional jump to signed value8 + PC
-  | CALL Word16              -- call the address
-  | CALLif Condition Word16  -- conditional call to address
-  | RET                      -- return
-  | RETif Condition          -- conditional return
-  | RETi                     -- return and enable interrupts
-  | RST Word8                -- call a restart vector
-
+  | JP Location               -- immediately jump to value16
+  | JPHL                      -- immediately jump to the value contained in HL
+  | JPif Condition Location   -- conditional jump to value16
+  | JRPC Int8                 -- relative jump by adding signed value8 to program counter
+  | JRPCif Condition Int8     -- conditional jump to signed value8 + PC
+  | CALL Location             -- call the address
+  | CALLif Condition Location -- conditional call to address
+  | RET                       -- return
+  | RETif Condition           -- conditional return
+  | RETi                      -- return and enable interrupts
+  | RST Word8                 -- call a restart vector
+ 
   -- Arithmetic & Logical instructions
   | ADDAr Register8          -- add the value contained in a register to A
   | ADDAn Word8              -- add a value8 to the value contained in A
@@ -157,8 +161,6 @@ data Instruction =
   -- RGBASM-specific convenience stuff.
   -- these would need revamping if we were to start generating native machine code
   | LABEL Label               -- create a numbered label
-  | JUMP Label                -- jump to a label
-  | JUMPif Condition Label    -- conditional jumping to a label
   | INCLUDE FilePath          -- include a file
   | BYTES [Word8]             -- define some bytes with a global label
 

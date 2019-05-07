@@ -68,12 +68,12 @@ freeze = loop $ return ()
           label <- getLocalLabel 
           tell [LABEL label]
           block
-          tell [JUMP label]
+          tell [JP (Name label)]
 
 -- | Executes the given action provided condition flag is set.
 cond :: Condition -> Lazyboy () -> Lazyboy ()
 cond condition block = do
   label <- getLocalLabel 
-  tell [JUMPif condition label]
+  tell [JPif condition (Name label)]
   block
   tell [LABEL label]

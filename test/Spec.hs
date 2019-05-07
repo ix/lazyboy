@@ -38,9 +38,9 @@ main = hspec $ do
     describe "Lazyboy.Types.execLazyboy" $ do
         it "compiles nested sequences in order" $ do
             let sequence = execLazyboy $ do
-                    write 0x2000 0x97
-                    write 0x1000 0x98
-            sequence `shouldBe` [LDrrnn HL 0x2000, LDHLn 0x97, LDrrnn HL 0x1000, LDHLn 0x98]
+                    write (Address 0x2000) 0x97
+                    write (Address 0x1000) 0x98
+            sequence `shouldBe` [LDrrnn HL (Address 0x2000), LDHLn 0x97, LDrrnn HL (Address 0x1000), LDHLn 0x98]
 
     describe "Lazyboy.Control" $ do
         describe "cond" $ do
@@ -48,16 +48,16 @@ main = hspec $ do
                 let program = execLazyboy $ do
                         cond NonZero $ do
                             freeze
-                program `shouldBe` [JUMPif NonZero $ Local 1, LABEL $ Local 2, JUMP $ Local 2, LABEL $ Local 1]
+                program `shouldBe` [JPif NonZero $ Name $ Local 1, LABEL $ Local 2, JP $ Name $ Local 2, LABEL $ Local 1]
             it "handles nested conditionals correctly" $ do
                 let program = execLazyboy $ do
                         cond Zero $ do
                             cond NonZero $ do
                                 freeze
-                program `shouldBe` [ JUMPif Zero $ Local 1
-                                , JUMPif NonZero $ Local 2
+                program `shouldBe` [ JPif Zero $ Name $ Local 1
+                                , JPif NonZero $ Name $ Local 2
                                 , LABEL $ Local 3
-                                , JUMP $ Local 3
+                                , JP $ Name $ Local 3
                                 , LABEL $ Local 2
                                 , LABEL $ Local 1 
                                 ]
@@ -65,7 +65,7 @@ main = hspec $ do
             it "creates an appropriately formatted global label" $ do
                 let program = map show $ execLazyboy $ do
                         withLabel $ \label -> do
-                            write 0xC000 0x97
+                            write (Address 0xC000) 0x97
                 program `shouldBe` [ "L1:"
                                    , "ld HL, $C000"
                                    , "ld [HL], 151"
@@ -74,7 +74,7 @@ main = hspec $ do
             it "creates an appropriately formatted local label" $ do
                 let program = map show $ execLazyboy $ do
                         withLocalLabel $ \label -> do
-                            write 0xC000 0x97
+                            write (Address 0xC000) 0x97
                 program `shouldBe` [ ".L1:"
                                    , "ld HL, $C000"
                                    , "ld [HL], 151"
@@ -103,9 +103,9 @@ main = hspec $ do
             it "disallows loading A into [PC]" $ do
                 disallow (show $ LDrrA PC)
             it "disallows loading a 16 bit value into AF" $ do
-                disallow (show $ LDrrnn AF 0x00)
+                disallow $ show $ LDrrnn AF $ Address 0x00
             it "disallows loading a 16 bit value into PC" $ do
-                disallow (show $ LDrrnn PC 0x00)
+                disallow $ show $ LDrrnn PC $ Address 0x00
             it "disallows pushing stack pointer" $ do
                 disallow (show $ PUSH SP)
             it "disallows pushing program counter" $ do

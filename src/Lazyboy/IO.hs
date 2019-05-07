@@ -62,7 +62,7 @@ instance Bitfield LCDControl where
                 lcdBE  = if lcdBackgroundEnable lcds    then 0b00000001 else 0
 
 setLCDControl :: LCDControl -> Lazyboy ()
-setLCDControl lcd = write lcdc $ pack lcd 
+setLCDControl lcd = write (Address lcdc) $ pack lcd 
 
 -- | A type representing the background palette
 data BackgroundPalette = BackgroundPalette { bgpColor3 :: Color
@@ -83,21 +83,21 @@ instance Bitfield BackgroundPalette where
               three = pack bgpColor3 `shiftL` 6
 
 setBackgroundPalette :: BackgroundPalette -> Lazyboy ()
-setBackgroundPalette pal = write bgp $ pack pal
+setBackgroundPalette pal = write (Address bgp) $ pack pal
 
 -- | Write a byte to a register
 byte :: Register8 -> Word8 -> Lazyboy ()
 byte reg val = tell [LDrn reg val]
 
 -- | Loads an 8-bit immediate value into a 16-bit memory address
-write :: Word16 -> Word8 -> Lazyboy ()
+write :: Location -> Word8 -> Lazyboy ()
 write addr val = tell [LDrrnn HL addr, LDHLn val]
 
 -- | Copy a region of memory to a destination (up to 255 bytes)
-memcpy :: Word16 -> Word16 -> Word8 -> Lazyboy ()
+memcpy :: Location -> Location -> Word8 -> Lazyboy ()
 memcpy src dest len = do
     -- load the destination into DE, source into HL and length into B
     tell [LDrrnn HL src, LDrrnn DE dest, LDrn B len]
     withLocalLabel $ \label -> do
         tell [LDAHLI] -- load a byte from [HL] into A and increment
-        tell [LDrrA DE, INCrr DE, DECr B, JUMPif NonZero label]
+        tell [LDrrA DE, INCrr DE, DECr B, JPif NonZero (Name label)]

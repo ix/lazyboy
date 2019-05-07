@@ -40,8 +40,8 @@ instance Show Instruction where
     show (LDrrA DE)   = printf "ld [DE], A"
     show (LDrrA HL)   = printf "ld [HL], A"
     show (LDrrA r1)   = error "A cannot be loaded into 16 bit register '%s'" r1
-    show (LDAnn v1)   = printf "ld A, [$%X]" v1
-    show (LDnnA v1)   = printf "ld [$%X], A" v1
+    show (LDAnn v1)   = printf "ld A, [%s]" v1
+    show (LDnnA v1)   = printf "ld [%s], A" v1
     show (LDAIO v1)   = printf "ldh A, [$FF00+$%X]" v1
     show (LDIOA v1)   = printf "ldh [$FF00+$%X], A" v1
     show (LDAIOC)     = printf "ldh A, [$FF00+C]"
@@ -52,7 +52,7 @@ instance Show Instruction where
     -- handle some special cases for ld rr,nn
     show (LDrrnn AF _) = error "You cannot load a 16 bit value directly into the register AF"
     show (LDrrnn PC _) = error "You cannot load a 16 bit value directly into the program counter"
-    show (LDrrnn r1 v1)  = printf "ld %s, $%X" r1 v1
+    show (LDrrnn r1 v1)  = printf "ld %s, %s" r1 v1
 
     show (LDSPHL) = printf "%ld SP, HL"
 
@@ -66,7 +66,7 @@ instance Show Instruction where
     show (POP r1) = printf "POP %s" r1
 
     -- jumps
-    show (JPnn v1) = printf "jp $%X" v1
+    show (JP v1) = printf "jp $%X" v1
     show (JPHL) = printf "jp HL"
     show (JPif c v1) = printf "jp %s, $%X" c v1
     show (JRPC v1) = printf "jr %d" v1
@@ -190,8 +190,6 @@ instance Show Instruction where
 
     -- RGBASM specific stuff
     show (LABEL l) = printf "%s:" l
-    show (JUMP l) = printf "jp %s" l
-    show (JUMPif c l) = printf "jp %s, %s" c l
     show (INCLUDE file) = printf "INCBIN \"%s\"" file
     show (BYTES bytes) = printf "db " ++ intercalate "," (map (printf "$%X") bytes)
 
@@ -213,6 +211,10 @@ instance PrintfArg Condition where
 instance PrintfArg Label where
     formatArg (Local v)  = formatString $ ".L" ++ show v
     formatArg (Global v) = formatString $ "L" ++ show v
+
+instance PrintfArg Location where
+    formatArg (Address v) = formatString $ (printf "$%X" v :: String)
+    formatArg (Name label) = formatString $ (printf "%s" label :: String)
 
 compileROM :: Lazyboy a -> IO Text
 compileROM code = do
