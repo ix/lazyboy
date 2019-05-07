@@ -82,11 +82,11 @@ main = hspec $ do
         describe "embedImage" $ do
             it "leverages RGBASM to include a binary" $ do
                 let program = execLazyboy $ embedImage "test.bin"
-                program `shouldBe` [LABEL $ Global 1, INCLUDE "test.bin"]
+                program `shouldBe` [JP $ Name $ Global 2, LABEL $ Global 1, INCLUDE "test.bin", LABEL $ Global 2]
         describe "embedBytes" $ do
             it "defines a raw sequence of bytes" $ do
                 let program = execLazyboy $ embedBytes [0x00, 0x01, 0x02]
-                program `shouldBe` [LABEL $ Global 1, BYTES [0x00, 0x01, 0x02]]
+                program `shouldBe` [JP $ Name $ Global 2, LABEL $ Global 1, BYTES [0x00, 0x01, 0x02], LABEL $ Global 2]
 
     describe "Lazyboy.Target.ASM" $ do
         describe "show" $ do
