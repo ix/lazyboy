@@ -17,6 +17,7 @@ module Lazyboy.Target.ASM where
 import           Control.Monad.Trans.RWS.Lazy
 import           Data.Aeson
 import           Data.Char                    (toLower)
+import           Data.List                    (intercalate)
 import           Data.Text.Lazy               (Text)
 import qualified Data.Text.Lazy.IO            as T
 import           Lazyboy.Types
@@ -191,6 +192,8 @@ instance Show Instruction where
     show (LABEL l) = printf "%s:" l
     show (JUMP l) = printf "jp %s" l
     show (JUMPif c l) = printf "jp %s, %s" c l
+    show (INCLUDE file) = printf "INCBIN \"%s\"" file
+    show (BYTES bytes) = printf "db " ++ intercalate "," (map (printf "$%X") bytes)
 
     show _            = error "Use of unimplemented instruction"
 

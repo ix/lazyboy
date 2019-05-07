@@ -159,5 +159,7 @@ data Instruction =
   | LABEL Label               -- create a numbered label
   | JUMP Label                -- jump to a label
   | JUMPif Condition Label    -- conditional jumping to a label
+  | INCLUDE FilePath          -- include a file
+  | BYTES [Word8]             -- define some bytes with a global label
 
   deriving (Read, Eq)
