@@ -6,4 +6,4 @@ dmg.cabal
 *.sym
 *.sav
 *.obj
-examples/*.asm
+example/*.asm
