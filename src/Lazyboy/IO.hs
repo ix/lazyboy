@@ -101,3 +101,12 @@ memcpy src dest len = do
     withLocalLabel $ \label -> do
         tell [LDAHLI] -- load a byte from [HL] into A and increment
         tell [LDrrA DE, INCrr DE, DECr B, JPif NonZero (Name label)]
+
+-- | Set a region of memory to a value (up to 255 bytes)
+memset :: Location -> Word8 -> Word8 -> Lazyboy ()
+memset dest len value = do
+    -- load the destination into HL, length into B and value into A
+    tell [LDrrnn HL dest, LDrn B len, LDrn A value]
+    withLocalLabel $ \label -> do
+        tell [LDHLAI] -- load A into [HL] and increment
+        tell [DECr B, JPif NonZero (Name label)]
