@@ -48,7 +48,7 @@ main = hspec $ do
                 let program = execLazyboy $ do
                         cond NonZero $ do
                             freeze
-                program `shouldBe` [JPif NonZero $ Name $ Local 1, LABEL $ Local 2, JP $ Name $ Local 2, LABEL $ Local 1]
+                program `shouldBe` [JPif NonZero $ Name $ Local 1, LABEL $ Global 2, DI, HALT, JP $ Name $ Global 2, LABEL $ Local 1]
             it "handles nested conditionals correctly" $ do
                 let program = execLazyboy $ do
                         cond Zero $ do
@@ -56,8 +56,10 @@ main = hspec $ do
                                 freeze
                 program `shouldBe` [ JPif Zero $ Name $ Local 1
                                 , JPif NonZero $ Name $ Local 2
-                                , LABEL $ Local 3
-                                , JP $ Name $ Local 3
+                                , LABEL $ Global 3
+                                , DI
+                                , HALT
+                                , JP $ Name $ Global 3
                                 , LABEL $ Local 2
                                 , LABEL $ Local 1 
                                 ]
