@@ -55,6 +55,7 @@ embedFile file = do
     return label
 
 -- | Embed an image and return a (global) label for it.
+-- A jump over the block of data is added to prevent the image data being executed.
 embedImage = embedFile
 
 -- | Embed a sequence of bytes into the file and return a (global) label for it.
@@ -68,15 +69,11 @@ embedBytes bytes = do
   tell [LABEL skipLabel]
   return label
 
--- | Suspend execution indefinitely by jumping infinitely.
--- A jump over the block of data is added to prevent the image data being executed.
+-- | Suspend execution indefinitely by disabling interrupts and halting.
 freeze :: Lazyboy ()
-freeze = loop $ return ()
-  where loop block = do
-          label <- getLocalLabel 
-          tell [LABEL label]
-          block
-          tell [JP (Name label)]
+freeze = withLabel $ \label -> do
+  tell [DI, HALT]
+  tell [JP $ Name label]
 
 -- | Executes the given action provided condition flag is set.
 cond :: Condition -> Lazyboy () -> Lazyboy ()
