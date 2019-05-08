@@ -31,3 +31,6 @@ Build a ROM (output will be named `main.gb`):
 stack run > examples/main.asm
 cd examples && make NAME=main
 ```
+
+# Special thanks
+Thanks to [Franceso149](https://github.com/Francesco149) and [Bonzi](https://github.com/bnzis) for kindly devoting their time and knowledge to the project. The graphics functionality in particular would not be where it is without their assistance.

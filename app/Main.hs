@@ -11,18 +11,21 @@ main :: IO ()
 main = rom >>= T.putStrLn
     where rom = compileROM $ do
             smiley <- embedBytes image
+            -- set scroll values
             write (Address scx) 0
             write (Address scy) 0
+            -- set background palette
             setBackgroundPalette defaultPalette
-            setLCDControl $ defaultLCDControl { lcdDisplayEnable = True, lcdBackgroundEnable = True }
-            --memset (Address $ 0xC000) 0xFF 97
-            whenVblank $
-                memcpy (Name smiley) (Address $ 0x9000 + 16) $ fromIntegral $ length image
-            tell [LDrrnn HL (Address 0x9800), LDHLn 1]
+            whenVblank $ do
+                setLCDControl $ defaultLCDControl -- default = all off
+                memcpy (Name smiley) (Address $ 0x9010) $ fromIntegral $ length image
+                memset (Address 0x9904) (0x992F - 0x9904) 0 -- clear the background tilemap
+                write (Address background1) 1 -- write the background tile data
+                setLCDControl $ defaultLCDControl { lcdDisplayEnable = True, lcdBackgroundEnable = True }
             freeze
 
-          image :: [Word8]
-          image = [0x00, 0x00, 0x00, 0x00, 0x24, 0x24, 0x00, 0x00, 0x81, 0x81, 0x7e, 0x7e, 0x00, 0x00, 0x00, 0x00]
+image :: [Word8]
+image = [0x00,0x00,0x00,0x00,0x24,0x24,0x00,0x00,0x81,0x81,0x7e,0x7e,0x00,0x00,0x00,0x00]
 
 whenVblank :: Lazyboy () -> Lazyboy ()
 whenVblank block = do
