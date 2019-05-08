@@ -113,3 +113,11 @@ memset dest len value = do
     withLocalLabel $ \label -> do
         tell [LDHLAI] -- load A into [HL] and increment
         tell [DECr B, JPif NonZero (Name label)]
+
+-- | Execute the given block when vblank occurs.
+onVblank :: Lazyboy () -> Lazyboy ()
+onVblank block = do
+    withLocalLabel $ \label -> do
+        tell [LDAnn $ Address ly, CPn 145]
+        tell [JPif NonZero $ Name label]
+        block

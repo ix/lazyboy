@@ -16,20 +16,16 @@ main = rom >>= T.putStrLn
             write (Address scy) 0
             -- set background palette
             setBackgroundPalette defaultPalette
-            whenVblank $ do
+            -- perform graphics operations
+            onVblank $ do
                 disableLCD
                 memcpy (Name smiley) (Address $ 0x9010) $ fromIntegral $ length image
                 memset (Address 0x9904) (0x992F - 0x9904) 0 -- clear the background tilemap
                 write (Address background1) 1 -- write the background tile data
                 setLCDControl $ defaultLCDControl { lcdDisplayEnable = True, lcdBackgroundEnable = True }
+            -- halt indefinitely
             freeze
 
 image :: [Word8]
 image = [0x00,0x00,0x00,0x00,0x24,0x24,0x00,0x00,0x81,0x81,0x7e,0x7e,0x00,0x00,0x00,0x00]
 
-whenVblank :: Lazyboy () -> Lazyboy ()
-whenVblank block = do
-    withLocalLabel $ \label -> do
-        tell [LDAnn $ Address ly, CPn 145]
-        tell [JPif NonZero $ Name label]
-        block
