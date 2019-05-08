@@ -61,6 +61,9 @@ instance Bitfield LCDControl where
                 lcdEO  = if lcdEnableObjects lcds       then 0b00000010 else 0
                 lcdBE  = if lcdBackgroundEnable lcds    then 0b00000001 else 0
 
+disableLCD :: Lazyboy ()
+disableLCD = setLCDControl defaultLCDControl
+
 setLCDControl :: LCDControl -> Lazyboy ()
 setLCDControl lcd = write (Address lcdc) $ pack lcd 
 

@@ -17,7 +17,7 @@ main = rom >>= T.putStrLn
             -- set background palette
             setBackgroundPalette defaultPalette
             whenVblank $ do
-                setLCDControl $ defaultLCDControl -- default = all off
+                disableLCD
                 memcpy (Name smiley) (Address $ 0x9010) $ fromIntegral $ length image
                 memset (Address 0x9904) (0x992F - 0x9904) 0 -- clear the background tilemap
                 write (Address background1) 1 -- write the background tile data
