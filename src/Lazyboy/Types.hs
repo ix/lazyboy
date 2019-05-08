@@ -73,8 +73,6 @@ data Instruction =
   | JP Location               -- immediately jump to value16
   | JPHL                      -- immediately jump to the value contained in HL
   | JPif Condition Location   -- conditional jump to value16
-  | JRPC Int8                 -- relative jump by adding signed value8 to program counter
-  | JRPCif Condition Int8     -- conditional jump to signed value8 + PC
   | CALL Location             -- call the address
   | CALLif Condition Location -- conditional call to address
   | RET                       -- return
