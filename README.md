@@ -42,5 +42,9 @@ stack run > examples/main.asm
 cd examples && make NAME=main
 ```
 
+# About issues
+I mostly use the issue tracker on here as a place to write about planned features and compiler development, 
+don't take the count as an indicator of active bugs, and be sure to filter to show only issues that are bugs if you are curious on the state of the project.
+
 # Special thanks
 Thanks to [Franceso149](https://github.com/Francesco149) and [Bonzi](https://github.com/bnzis) for kindly devoting their time and knowledge to the project. The graphics functionality in particular would not be where it is without their assistance.
