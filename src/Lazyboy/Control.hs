@@ -24,9 +24,11 @@ getLabel = do
   modify (+ 1)
   return label
 
+-- | Get a local label. The name is guaranteed to be unique.
 getLocalLabel :: Lazyboy Label
 getLocalLabel = Local <$> getLabel
 
+-- | Get a global label. The name is guaranteed to be unique.
 getGlobalLabel :: Lazyboy Label
 getGlobalLabel = Global <$> getLabel
 
@@ -44,7 +46,8 @@ withLocalLabel block = do
   tell [LABEL label]
   block label
 
--- | Embed a file and return a (global) label for it.
+-- | Embed a file and return a global label for it.
+-- A jump over the block of data is added to prevent the image data being executed.
 embedFile :: FilePath -> Lazyboy Label
 embedFile file = do
     label <- getGlobalLabel 
