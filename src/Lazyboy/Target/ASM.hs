@@ -25,7 +25,7 @@ import           Paths_lazyboy
 import           Text.Microstache
 import           Text.Printf
 
--- | Format Instructions as Strings
+-- | A custom Show instance which formats Instructions as assembly.
 instance Show Instruction where
     show (LDrr r1 r2) = printf "ld %s, %s" r1 r2
     show (LDrn r1 v1) = printf "ld %s, %d" r1 v1
@@ -218,6 +218,10 @@ instance PrintfArg Location where
     formatArg (Address v) = formatString $ (printf "$%X" v :: String)
     formatArg (Name label) = formatString $ (printf "%s" label :: String)
 
+-- | Compiles an action to an assembly source file. 
+-- This function makes use of a "bare" template, which 
+-- sets up an appropriate start location for the body of the program
+-- and defines an entry point label 'main'.
 compileROM :: Lazyboy a -> IO Text
 compileROM code = do
     templatePath <- getDataFileName "templates/bare.mustache"

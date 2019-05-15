@@ -20,146 +20,151 @@ import           Control.Monad.Trans.RWS.Lazy
 import           Data.Int
 import           Data.Word
 
--- Rename and re-export RWS types and functions
+-- | A type alias that defines Lazyboy as a specialization of the
+-- RWS monad transformer stack. Reader goes unused, Writer is utilized
+-- for an output list of Instructions, and State is merely an integer
+-- which counts labels, thus naming them.
 type Lazyboy a = RWS () [Instruction] Integer a
 
+-- | Executes an action and returns a list of Instructions.
 execLazyboy :: Lazyboy a -> [Instruction]
 execLazyboy m = snd $ execRWS m () 1
 
--- | An address or label
+-- | A type which represents an address or label.
 data Location = Address Word16 | Name Label
-  deriving (Read, Show, Eq)
+  deriving (Eq)
 
--- | Condition codes
+-- | A type representing Condition flags on the hardware.
 data Condition = Zero | NonZero | Carry | NoCarry
-  deriving (Read, Show, Eq)
+  deriving (Eq)
 
--- | 8 bit registers
+-- | Named 8-bit registers.
 data Register8 = A | B | C | D | E | H | L
   deriving (Read, Show, Eq)
 
--- | 16 bit registers
+-- | Named 16-bit registers.
 data Register16 = BC | DE | HL | AF | SP | PC
   deriving (Read, Show, Eq)
 
+-- | A type which represents a label, which may be local or global in scope.
 data Label = Local Integer | Global Integer
-  deriving (Read, Show, Eq)
+  deriving (Eq)
 
--- | GB Opcodes and other special forms
-data Instruction =
-    LDrr Register8 Register8   -- load the value in one register8 into another
-  | LDrn Register8 Word8       -- load the immediate value8 into a register8
-  | LDrHL Register8            -- load the value8 stored at the address in HL into a register8
-  | LDHLr Register8            -- load the value8 stored in a register8 into the address in HL
-  | LDHLn Word8                -- load the immediate value8 into the address in HL
-  | LDArr Register16           -- load the value at the address contained in a 16 bit register into A
-  | LDrrA Register16           -- laod A into the address contained in a 16 bit register
-  | LDAnn Location             -- load the value8 stored in the value16 address into A
-  | LDnnA Location             -- load the value8 stored in A into the value16 address
-  | LDAIO Word8                -- read into A from IO port n (FF00 + value8)
-  | LDIOA Word8                -- store value8 in A into IO port n (FF00 + value8)
-  | LDAIOC                     -- read from IO port FF00+c into A
-  | LDIOCA                     -- store the value8 in A into IO port FF00+C
-  | LDHLAI                     -- store value in register A into byte pointed by HL and post-increment HL
-  | LDAHLI                     -- store value in address in HL in A and post-increment HL
-  | LDHLAD                     -- store value in register A into byte pointed by HL and post-decrement HL.
-  | LDAHLD                     -- store value in address in HL in A and post-decrement HL
-  | LDrrnn Register16 Location -- load the value16 address into the register16
-  | LDSPHL                     -- set the stack pointer to the value in HL
-  | PUSH Register16            -- push register16 onto the stack
-  | POP Register16             -- pop register16 from the stack
+-- | Type-level representations of instructions and primitive special forms.
+data Instruction = 
+    LDrr Register8 Register8   -- ^ Load the value in one Register8 into another.
+  | LDrn Register8 Word8       -- ^ Load the immediate Word8 into a Register8.
+  | LDrHL Register8            -- ^ Load the Word8 stored at the address in HL into a Register8.
+  | LDHLr Register8            -- ^ Load the Word8 stored in a Register8 into the address in HL.
+  | LDHLn Word8                -- ^ Load the immediate Word8 into the address in HL.
+  | LDArr Register16           -- ^ Load the value at the address contained in a Register16 into A.
+  | LDrrA Register16           -- ^ Load A into the address contained in a Register16.
+  | LDAnn Location             -- ^ Load the Word8 stored in the Location into A.
+  | LDnnA Location             -- ^ Load the Word8 stored in A into the Location.
+  | LDAIO Word8                -- ^ Read into A from IO port n (FF00 + Word8).
+  | LDIOA Word8                -- ^ Store the Word8 in A into IO port n (FF00 + Word8).
+  | LDAIOC                     -- ^ Read from IO port FF00+C into A.
+  | LDIOCA                     -- ^ Store the Word8 in A into IO port FF00+C.
+  | LDHLAI                     -- ^ Store value in register A into byte pointed by HL and post-increment HL.
+  | LDAHLI                     -- ^ Store value in address in HL in A and post-increment HL.
+  | LDHLAD                     -- ^ Store value in register A into byte pointed by HL and post-decrement HL.
+  | LDAHLD                     -- ^ Store value in address in HL in A and post-decrement HL.
+  | LDrrnn Register16 Location -- ^ Load a Location into a Register16.
+  | LDSPHL                     -- ^ Set the stack pointer (SP) to the value in HL.
+  | PUSH Register16            -- ^ Push Register16 onto the stack.
+  | POP Register16             -- ^ Pop Register16 from the stack.
 
   -- Jump & Call instructions
-  | JP Location               -- immediately jump to value16
-  | JPHL                      -- immediately jump to the value contained in HL
-  | JPif Condition Location   -- conditional jump to value16
-  | CALL Location             -- call the address
-  | CALLif Condition Location -- conditional call to address
-  | RET                       -- return
-  | RETif Condition           -- conditional return
-  | RETi                      -- return and enable interrupts
-  | RST Word8                 -- call a restart vector
- 
+  | JP Location               -- ^ Immediately and unconditionally jump to a Location.
+  | JPHL                      -- ^ Immediately and unconditionally jump to the value contained in HL.
+  | JPif Condition Location   -- ^ Conditionally jump to a Location.
+  | CALL Location             -- ^ Call a Location.
+  | CALLif Condition Location -- ^ Conditionally call a Location. 
+  | RET                       -- ^ Return from a labelled block.
+  | RETif Condition           -- ^ Conditionally return from a labelled block. 
+  | RETi                      -- ^ Return and enable interrupts.
+  | RST Word8                 -- ^ Call a restart vector.
+
   -- Arithmetic & Logical instructions
-  | ADDAr Register8          -- add the value contained in a register to A
-  | ADDAn Word8              -- add a value8 to the value contained in A
-  | ADDHL                    -- add the value contained in the address stored in HL to A
-  | ADCAr Register8          -- add the value in the register + the carry flag to A
-  | ADCAn Word8              -- add the immediate value + the carry flag to A
-  | ADCHL                    -- add the value contained in the address in HL + the carry flag to A
-  | SUBAr Register8          -- subtract the value contained in a register from A
-  | SUBAn Word8              -- subtract a value8 from A
-  | SUBHL                    -- subtract from A the value contained in the address in HL
-  | SBCAr Register8          -- subtract from A the value contained in the register + carry flag
-  | SBCAn Word8              -- subtract from A the value + carry flag
-  | SBCAHL                   -- subtract from A the value contained in the address in HL + carry flag
-  | ANDr Register8           -- assign to A the value contained in a register & itself
-  | ANDn Word8               -- assign to A a value8 & itself
-  | ANDHL                    -- assign to A itself & the value in the address in HL
-  | XORr Register8           -- assign to A the value contained in a register ^ itself
-  | XORn Word8               -- assign to A a value8 ^ itself
-  | XORHL                    -- assign to A itself ^ the value in the address in HL
-  | ORr Register8            -- assign to A the value contained in a register | itself
-  | ORn Word8                -- assign to A a value8 | itself
-  | ORHL                     -- assign to A itself | the value in the address in HL
-  | CPr Register8            -- substract from A the value in a register and set flags accordingly, don't store the result
-  | CPn Word8                -- subtract from A a value8 and set flags accordingly, but don't store the result
-  | CPHL                     -- subtract from A the value in the address in HL, set flags, don't store the result
-  | INCr Register8           -- increment the value in a register
-  | INCHL                    -- increment the value at the address in HL
-  | DECr Register8           -- decrement the value in a register
-  | DECHL                    -- decrement the value at the address in HL
-  | DAA                      -- decimal-adjust register A
-  | CPL                      -- complement accumulator (A = ~A)
-  | ADDHLrr Register16       -- add the value contained in a 16 bit register to HL
-  | INCrr Register16         -- increment the value in a 16 bit register
-  | DECrr Register16         -- decrement the value in a 16 bit register
-  | ADDSPn Int8              -- add the signed value8 to the stack pointer
-  | LDHLSPn Int8             -- load into hl the stack pointer + a value8
+  | ADDAr Register8          -- ^ Add the value contained in a Register8 to A.
+  | ADDAn Word8              -- ^ Add a Word8 to the value contained in A.
+  | ADDHL                    -- ^ Add the value contained in the address stored in HL to A.
+  | ADCAr Register8          -- ^ Add the value in a Register8 + the carry flag to A.
+  | ADCAn Word8              -- ^ Add a Word8 + the carry flag to A.
+  | ADCHL                    -- ^ Add the value pointed to by HL + the carry flag to A.
+  | SUBAr Register8          -- ^ Subtract the value contained in a Register8 from A.
+  | SUBAn Word8              -- ^ Subtract a Word8 from A.
+  | SUBHL                    -- ^ Subtract from A the value contained at the address in HL.
+  | SBCAr Register8          -- ^ Subtract from A the value contained in a Register8 + the carry flag.
+  | SBCAn Word8              -- ^ Subtract from A a Word8 + the carry flag.
+  | SBCAHL                   -- ^ Subtract from A the value contained in the address in HL + the carry flag.
+  | ANDr Register8           -- ^ Assign to A the value contained in a Register8 & A itself.
+  | ANDn Word8               -- ^ Assign to A a Word8 & A itself.
+  | ANDHL                    -- ^ Assign to A itself & the value in the address in HL.
+  | XORr Register8           -- ^ Assign to A the value contained in a register ^ A itself
+  | XORn Word8               -- ^ Assign to A a Word8 ^ itself.
+  | XORHL                    -- ^ Assign to A itself ^ the value in the address in HL.
+  | ORr Register8            -- ^ Assign to A the value contained in a register | A itself.
+  | ORn Word8                -- ^ Assign to A a Word8 | itself.
+  | ORHL                     -- ^ Assign to A itself | the value in the address in HL
+  | CPr Register8            -- ^ Subtract from A the value in a Register8 and set flags accordingly, but don't store the result.
+  | CPn Word8                -- ^ Subtract from A a Word8 and set flags accordingly, but don't store the result.
+  | CPHL                     -- ^ Subtract from A the value in the address in HL, set flags, but don't store the result.
+  | INCr Register8           -- ^ Increment the value in a Register8.
+  | INCHL                    -- ^ Increment the value at the address in HL.
+  | DECr Register8           -- ^ Decrement the value in a Register8.
+  | DECHL                    -- ^ Decrement the value at the address in HL.
+  | DAA                      -- ^ Decimal-adjust register A.
+  | CPL                      -- ^ Complement accumulator (A = ~A).
+  | ADDHLrr Register16       -- ^ Add the value contained in a Register16 to HL.
+  | INCrr Register16         -- ^ Increment the value in a Register16.
+  | DECrr Register16         -- ^ Decrement the value in a Register16.
+  | ADDSPn Int8              -- ^ Add an Int8 to the stack pointer.
+  | LDHLSPn Int8             -- ^ Load into HL the stack pointer + an Int8.
 
   -- Single-bit instructions
-  | BITnr Word8 Register8    -- test bit n in register8, set the zero flag if not set
-  | BITnHL Word8             -- test bit n in the byte pointed by HL, set the zero flag if not set
-  | SETnr Word8 Register8    -- set bit n in register8
-  | SETnHL Word8             -- set bit n in the byte pointed by HL
-  | RESnr Word8 Register8    -- unset bit n in register8
-  | RESnHL Word8             -- unset bit n in the byte pointed by HL
+  | BITnr Word8 Register8    -- ^ Test bit n in a Register8, set the zero flag if not set.
+  | BITnHL Word8             -- ^ Test bit n in the Word8 pointed by HL, set the zero flag if not set.
+  | SETnr Word8 Register8    -- ^ Set bit n in a Register8.
+  | SETnHL Word8             -- ^ Set bit n in the Word8 pointed by HL.
+  | RESnr Word8 Register8    -- ^ Unset bit n in Register8.
+  | RESnHL Word8             -- ^ Unset bit n in the Word8 pointed by HL.
 
   -- Rotate & shift instructions
-  | RLCA -- rotate accumulator left
-  | RLA  -- rotate accumulator left through carry
-  | RRCA -- rotate accumulator right
-  | RRA  -- rotate accumulator rit through carry
-  | RLC Register8 -- rotate left
-  | RLCHL -- rotate value contained at address in HL left
-  | RL Register8 -- rotate left through carry
-  | RLHL -- rotate value contained at address in HL left through carry
-  | RRC Register8 -- rotate right
-  | RRCHL -- rotate value contained at address in HL right
-  | RR Register8 -- rotate right through carry
-  | RRHL -- rotate value contained at address in HL right through carry
-  | SLA Register8 -- shift left arithmetic
-  | SLAHL -- shift left arithmetic (HL pointer)
-  | SWAP Register8 -- exchange low and high nibbles
-  | SWAPHL -- exchange low and high nibbles in HL pointer
-  | SRA Register8 -- shift right arithmetic
-  | SRAHL -- shift right arithmetic in HL pointer
-  | SRL Register8 -- shift right logical
-  | SRLHL -- shift right logical in HL pointer
+  | RLCA                     -- ^ Rotate accumulator left.
+  | RLA                      -- ^ Rotate accumulator left through carry.
+  | RRCA                     -- ^ Rotate accumulator right.
+  | RRA                      -- ^ Rotate accumulator rit through carry.
+  | RLC Register8            -- ^ Rotate Register8 left.
+  | RLCHL                    -- ^ Rotate value contained at address in HL left.
+  | RL Register8             -- ^ Rotate Register8 left through carry.
+  | RLHL                     -- ^ Rotate value contained at address in HL left through carry.
+  | RRC Register8            -- ^ Rotate Register8 right.
+  | RRCHL                    -- ^ Rotate value contained at address in HL right.
+  | RR Register8             -- ^ Rotate Register8 right through carry.
+  | RRHL                     -- ^ Rotate value contained at address in HL right through carry.
+  | SLA Register8            -- ^ Shift Register8 left arithmetic.
+  | SLAHL                    -- ^ Shift left arithmetic (HL pointer).
+  | SWAP Register8           -- ^ Exchange low and high nibbles in Register8.
+  | SWAPHL                   -- ^ Exchange low and high nibbles in HL pointer.
+  | SRA Register8            -- ^ Shift Register8 right arithmetic.
+  | SRAHL                    -- ^ Shift right arithmetic in HL pointer.
+  | SRL Register8            -- ^ Shift Register8 right logical.
+  | SRLHL                    -- ^ Shift right logical in HL pointer.
 
   -- CPU control instructions
-  | CCF                      -- complement carry flag
-  | SCF                      -- set carry flag
-  | NOP                      -- no operation
-  | HALT                     -- halt until interrupt
-  | STOP                     -- standby mode
-  | DI                       -- disable interrupts
-  | EI                       -- enable interrupts
+  | CCF                      -- ^ Complement carry flag.
+  | SCF                      -- ^ Set carry flag.
+  | NOP                      -- ^ No operation.
+  | HALT                     -- ^ Halt until interrupt.
+  | STOP                     -- ^ Standby mode.
+  | DI                       -- ^ Disable interrupts.
+  | EI                       -- ^ Enable interrupts.
 
   -- RGBASM-specific convenience stuff.
   -- these would need revamping if we were to start generating native machine code
-  | LABEL Label               -- create a numbered label
-  | INCLUDE FilePath          -- include a file
-  | BYTES [Word8]             -- define some bytes with a global label
+  | LABEL Label               -- ^ Create a numbered label.
+  | INCLUDE FilePath          -- ^ Include the file at FilePath.
+  | BYTES [Word8]             -- ^ Define some bytes in the form of a Word8 list with a global label.
 
-  deriving (Read, Eq)
+  deriving (Eq)
