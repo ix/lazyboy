@@ -4,16 +4,18 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 84c217448ac148dc958befa1bb459b81dd64252f634cbb312eea46a47b042f71
+-- hash: dc9d68e519cd2d5a750cc8bd934657c18d69c93e7ab031ec746b488daa97c459
 
 name:           lazyboy
-version:        0.1.0.0
+version:        0.2.0.0
+synopsis:       An EDSL for programming the Game Boy.
 description:    An EDSL for programming the Nintendo Game Boy. <https://github.com/ix/lazyboy#readme>
+category:       DSL
 homepage:       https://github.com/ix/lazyboy#readme
 bug-reports:    https://github.com/ix/lazyboy/issues
 author:         Rose
 maintainer:     rose@lain.org.uk
-copyright:      2018 Rose
+copyright:      2019 Rose
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -44,23 +46,6 @@ library
       aeson
     , base >=4.7 && <5
     , hspec
-    , microstache
-    , text
-    , transformers
-  default-language: Haskell2010
-
-executable lazyboy
-  main-is: Main.hs
-  other-modules:
-      Paths_lazyboy
-  hs-source-dirs:
-      app
-  ghc-options: -optP-Wno-nonportable-include-path -threaded -rtsopts -with-rtsopts=-N
-  build-depends:
-      aeson
-    , base >=4.7 && <5
-    , hspec
-    , lazyboy
     , microstache
     , text
     , transformers
