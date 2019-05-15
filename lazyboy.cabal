@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 9bb7433cc3cc90d01e0908f74b536e83dd9d6f13b3ce1fed2a9b064d4360f2b2
+-- hash: adf7789c9ad4079eecaed83a9a636259d71db49774524381e2019d335985207e
 
 name:           lazyboy
-version:        0.2.0.0
+version:        0.2.0.1
 synopsis:       An EDSL for programming the Game Boy.
 description:    An EDSL for programming the Nintendo Game Boy. <https://github.com/ix/lazyboy#readme>
 category:       DSL, Compiler
