@@ -8,6 +8,9 @@
 - Removed some useless instances of Show and Read.
 - Refactored most of the documentation.
 
+## 0.2.0.2
+ - Changed ASM.hs to use custom exception types instead of just `error`.
+
 # 0.1.0.0
 - Initial version.
 
