@@ -14,16 +14,44 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Lazyboy.Target.ASM where
 
+import           Control.Exception
 import           Control.Monad.Trans.RWS.Lazy
 import           Data.Aeson
 import           Data.Char                    (toLower)
 import           Data.List                    (intercalate)
 import           Data.Text.Lazy               (Text)
 import qualified Data.Text.Lazy.IO            as T
+import           Data.Word
+import           Debug.Trace
 import           Lazyboy.Types
 import           Paths_lazyboy
 import           Text.Microstache
 import           Text.Printf
+
+-- | Lazyboy exception type.
+data LazyboyException =
+    InvalidStackOperation
+  | InvalidALoad Register16
+  | AttemptedAFPCLoad
+  | InvalidRSTVector
+  | IllegalHLAddition
+  | IllegalModification Register16
+  | IntegerBoundsViolation Word8
+  | Unimplemented
+
+-- | An instance of Show for printing exception messages.
+instance Show LazyboyException where
+    show InvalidStackOperation  = printf "You cannot push or pop the program counter or stack pointer onto/from the stack."
+    show (InvalidALoad r) =  printf "You cannot perform loads between the 16 bit register '%s' and A." r
+    show AttemptedAFPCLoad = printf "You cannot load a 16 bit value directly into AF or the program counter."
+    show InvalidRSTVector = "Invalid RST vector specified!"
+    show IllegalHLAddition = "Cannot add the given the 16 bit register to HL."
+    show (IllegalModification r) = printf "Cannot increment or decrement the given 16 bit register '%s'." r
+    show (IntegerBoundsViolation v) = printf "Value '%d' given to an instruction expecting a 3-bit value." v
+    show Unimplemented = "Use of an unimplemented instruction."
+
+-- | An instance of Exception itself for LazyboyException.
+instance Exception LazyboyException where
 
 -- | A custom Show instance which formats Instructions as assembly.
 instance Show Instruction where
@@ -35,11 +63,11 @@ instance Show Instruction where
     show (LDArr BC)   = printf "ld A, [BC]"
     show (LDArr DE)   = printf "ld A, [DE]"
     show (LDArr HL)   = printf "ld A, [HL]"
-    show (LDArr r1)   = error "16 bit register '%s' cannot be loaded into A" r1
+    show (LDArr r1)   = throw $ InvalidALoad r1
     show (LDrrA BC)   = printf "ld [BC], A"
     show (LDrrA DE)   = printf "ld [DE], A"
     show (LDrrA HL)   = printf "ld [HL], A"
-    show (LDrrA r1)   = error "A cannot be loaded into 16 bit register '%s'" r1
+    show (LDrrA r1)   = throw $ InvalidALoad r1
     show (LDAnn v1)   = printf "ld A, [%s]" v1
     show (LDnnA v1)   = printf "ld [%s], A" v1
     show (LDAIO v1)   = printf "ldh A, [$FF00+$%X]" v1
@@ -50,19 +78,19 @@ instance Show Instruction where
     show (LDAHLI)     = printf "ld A, [HL+]"
 
     -- handle some special cases for ld rr,nn
-    show (LDrrnn AF _) = error "You cannot load a 16 bit value directly into the register AF"
-    show (LDrrnn PC _) = error "You cannot load a 16 bit value directly into the program counter"
+    show (LDrrnn AF _) = throw AttemptedAFPCLoad
+    show (LDrrnn PC _) = throw AttemptedAFPCLoad
     show (LDrrnn r1 v1)  = printf "ld %s, %s" r1 v1
 
     show (LDSPHL) = printf "%ld SP, HL"
 
     -- stack manipulation
-    show (PUSH SP) = error "You cannot push the stack pointer onto the stack"
-    show (PUSH PC) = error "You cannot push the program counter onto the stack"
+    show (PUSH SP) = throw InvalidStackOperation
+    show (PUSH PC) = throw InvalidStackOperation
     show (PUSH r1) = printf "PUSH %s" r1
 
-    show (POP SP) = error "You cannot pop the stack pointer from the stack"
-    show (POP PC) = error "You cannot pop the program counter from the stack"
+    show (POP SP) = throw InvalidStackOperation
+    show (POP PC) = throw InvalidStackOperation
     show (POP r1) = printf "POP %s" r1
 
     -- jumps
@@ -89,7 +117,7 @@ instance Show Instruction where
     show (RST 0x28) = printf "RST $28"
     show (RST 0x30) = printf "RST $30"
     show (RST 0x38) = printf "RST $38"
-    show (RST _) = error "Invalid RST vector specified!"
+    show (RST _) = throw InvalidRSTVector
 
     -- arithmetic and comparisons
     show (ADDAr r1) = printf "add A, %s" r1
@@ -127,17 +155,17 @@ instance Show Instruction where
     show (ADDHLrr DE) = printf "add HL, DE"
     show (ADDHLrr HL) = printf "add HL, HL"
     show (ADDHLrr SP) = printf "add HL, SP"
-    show (ADDHLrr r1) = error "Cannot add the given the 16 bit register to HL"
+    show (ADDHLrr r1) = throw IllegalHLAddition
     show (INCrr BC) = printf "inc BC"
     show (INCrr DE) = printf "inc DE"
     show (INCrr HL) = printf "inc HL"
     show (INCrr SP) = printf "inc SP"
-    show (INCrr r1) = error "Cannot increment the given 16 bit register"
+    show (INCrr r1) = throw $ IllegalModification r1
     show (DECrr BC) = printf "dec BC"
     show (DECrr DE) = printf "dec DE"
     show (DECrr HL) = printf "dec HL"
     show (DECrr SP) = printf "dec SP"
-    show (DECrr r1) = error "Cannot decrement the given 16 bit register"
+    show (DECrr r1) = throw $ IllegalModification r1
 
     -- Rotate & shift
     show (RLCA) = printf "rlca"
@@ -173,29 +201,29 @@ instance Show Instruction where
     -- Bit manipulation
     show (BITnr v r1)
         | v >= 0 && v <= 7 = printf "bit %d, %s" v r1
-        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+        | otherwise        = throw $ IntegerBoundsViolation v
     show (BITnHL v)
         | v >= 0 && v <= 7 = printf "bit %d, HL" v
-        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+        | otherwise        = throw $ IntegerBoundsViolation v
     show (SETnr v r1)
         | v >= 0 && v <= 7 = printf "set %d, %s" v r1
-        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+        | otherwise        = throw $ IntegerBoundsViolation v
     show (SETnHL v)
         | v >= 0 && v <= 7 = printf "set %d, HL" v
-        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+        | otherwise        = throw $ IntegerBoundsViolation v
     show (RESnr v r1)
         | v >= 0 && v <= 7 = printf "res %d, %s" v r1
-        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+        | otherwise        = throw $ IntegerBoundsViolation v
     show (RESnHL v)
         | v >= 0 && v <= 7 = printf "res %d, HL" v
-        | otherwise        = error "invalid value provided to an instruction expecting a 3-bit value"
+        | otherwise        = throw $ IntegerBoundsViolation v
 
     -- RGBASM specific stuff
     show (LABEL l) = printf "%s:" l
     show (INCLUDE file) = printf "INCBIN \"%s\"" file
     show (BYTES bytes) = printf "db " ++ intercalate "," (map (printf "$%X") bytes)
 
-    show _            = error "Use of unimplemented instruction"
+    show _            = throw Unimplemented
 
 -- | Instances of PrintfArg
 instance PrintfArg Register16 where
@@ -215,11 +243,11 @@ instance PrintfArg Label where
     formatArg (Global v) = formatString $ "L" ++ show v
 
 instance PrintfArg Location where
-    formatArg (Address v) = formatString $ (printf "$%X" v :: String)
+    formatArg (Address v)  = formatString $ (printf "$%X" v :: String)
     formatArg (Name label) = formatString $ (printf "%s" label :: String)
 
--- | Compiles an action to an assembly source file. 
--- This function makes use of a "bare" template, which 
+-- | Compiles an action to an assembly source file.
+-- This function makes use of a "bare" template, which
 -- sets up an appropriate start location for the body of the program
 -- and defines an entry point label 'main'.
 compileROM :: Lazyboy a -> IO Text
