@@ -10,21 +10,8 @@ import           Lazyboy.Target.ASM
 main :: IO ()
 main = rom >>= T.putStrLn
     where rom = compileROM $ do
-            smiley <- embedBytes image
-            -- set scroll values
-            write (Address scx) 0
-            write (Address scy) 0
-            -- set background palette
-            setBackgroundPalette defaultPalette
-            -- perform graphics operations
-            onVblank $ do
-                disableLCD
-                memcpy (Name smiley) (Address $ 0x9010) $ fromIntegral $ length image
-                memset (Address 0x9904) (0x992F - 0x9904) 0 -- clear the background tilemap
-                write (Address background1) 1 -- write the background tile data
-                setLCDControl $ defaultLCDControl { lcdDisplayEnable = True, lcdBackgroundEnable = True }
-            -- halt indefinitely
+            byte A 0xDE
+            byte B 0xDE
+            if' ((A `equalTo` (0xDE :: Word8)) `Lazyboy.and` (A `equalTo` B)) $ do
+                write (Address wram0) 0xDE
             freeze
-
-image :: [Word8]
-image = [0x00,0x00,0x00,0x00,0x24,0x24,0x00,0x00,0x81,0x81,0x7e,0x7e,0x00,0x00,0x00,0x00]
