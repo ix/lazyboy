@@ -132,7 +132,7 @@ if' condition block = do
   flag <- condition 
   cond flag block
 
-
+-- | Boolean NOT operation for inverting Condition flags.
 not :: Lazyboy Condition -> Lazyboy Condition
 not action = do
   flag <- action
@@ -144,17 +144,6 @@ not action = do
 
 -- | Assign boolean values to two registers based on the result flags of 
 -- some conditions and then AND them and return the result.
-
--- [TODO] Establish whether we still need this at all - it was the ideal but it's seemingly not possible.
-{- and :: Lazyboy Condition -> Lazyboy Condition -> Lazyboy Condition
-and a b = do
-  a' <- a
-  tell [LDrr L F]
-  b' <- b
-  tell [LDrr A F]
-  tell [ANDr L]
-  return Zero -}
-
 and :: Lazyboy Condition -> Lazyboy Condition -> Lazyboy Condition
 and a b = do
   a' <- a
@@ -164,4 +153,17 @@ and a b = do
   cond b' $ do
     tell [LDrn A 1]
   tell [ANDr L]
+  return Zero
+
+-- | Assign boolean values to two registers based on the result flags of
+-- some conditions and then OR them and return the result.
+or :: Lazyboy Condition -> Lazyboy Condition -> Lazyboy Condition
+or a b = do
+  a' <- a
+  cond a' $ do
+    tell [LDrn L 1]
+  b' <- b
+  cond b' $ do
+    tell [LDrn A 1]
+  tell [ORr L]
   return Zero
