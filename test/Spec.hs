@@ -11,6 +11,7 @@
 -}
 
 import           Control.Exception  (evaluate)
+import           Data.Word
 import           Lazyboy
 import           Lazyboy.Target.ASM
 import           Test.Hspec
@@ -61,7 +62,7 @@ main = hspec $ do
                                 , HALT
                                 , JP $ Name $ Global 3
                                 , LABEL $ Local 2
-                                , LABEL $ Local 1 
+                                , LABEL $ Local 1
                                 ]
         describe "withLabel" $ do
             it "creates an appropriately formatted global label" $ do
@@ -89,6 +90,85 @@ main = hspec $ do
             it "defines a raw sequence of bytes" $ do
                 let program = execLazyboy $ embedBytes [0x00, 0x01, 0x02]
                 program `shouldBe` [JP $ Name $ Global 2, LABEL $ Global 1, BYTES [0x00, 0x01, 0x02], LABEL $ Global 2]
+        describe "not" $ do
+            it "inverts a given condition flag" $ do
+                let flags = map ((\f -> fst $ evalRWS f () 1) . Lazyboy.not . return) [Zero, NonZero, Carry, NoCarry]
+                flags `shouldBe` [NonZero, Zero, NoCarry, Carry]
+        describe "equalTo" $ do
+            it "checks equality between two values" $ do
+                let ab = map show $ execLazyboy $ A `equalTo` B
+                let bc = map show $ execLazyboy $ B `equalTo` C
+                let an = map show $ execLazyboy $ A `equalTo` (5 :: Word8)
+                let nc = map show $ execLazyboy $ (100 :: Word8) `equalTo` C
+                ab `shouldBe` ["cp A, B"]
+                bc `shouldBe` ["ld A, B", "cp A, C"]
+                an `shouldBe` ["cp A, 5"]
+                nc `shouldBe` ["ld A, C", "cp A, 100"]
+        describe "notEqualTo" $ do
+            it "checks inequality between two values" $ do
+                let ab = map show $ execLazyboy $ A `notEqualTo` B
+                let bc = map show $ execLazyboy $ B `notEqualTo` C
+                let an = map show $ execLazyboy $ A `notEqualTo` (5 :: Word8)
+                let nc = map show $ execLazyboy $ (100 :: Word8) `notEqualTo` C
+                ab `shouldBe` ["cp A, B"]
+                bc `shouldBe` ["ld A, B", "cp A, C"]
+                an `shouldBe` ["cp A, 5"]
+                nc `shouldBe` ["ld A, C", "cp A, 100"]
+        describe "greaterThan" $ do
+            it "checks greater of two values" $ do
+                let ab = map show $ execLazyboy $ A `greaterThan` B
+                let bc = map show $ execLazyboy $ B `greaterThan` C
+                let an = map show $ execLazyboy $ A `greaterThan` (5 :: Word8)
+                let nc = map show $ execLazyboy $ (100 :: Word8) `greaterThan` C
+                ab `shouldBe` ["cp A, B"]
+                bc `shouldBe` ["ld A, B", "cp A, C"]
+                an `shouldBe` ["cp A, 5"]
+                nc `shouldBe` ["ld A, C", "cp A, 100"]
+        describe "lessThan" $ do
+            it "checks lesser of two values" $ do
+                let ab = map show $ execLazyboy $ A `lessThan` B
+                let bc = map show $ execLazyboy $ B `lessThan` C
+                let an = map show $ execLazyboy $ A `lessThan` (5 :: Word8)
+                let nc = map show $ execLazyboy $ (100 :: Word8) `lessThan` C
+                ab `shouldBe` ["cp A, B"]
+                bc `shouldBe` ["ld A, B", "cp A, C"]
+                an `shouldBe` ["cp A, 5"]
+                nc `shouldBe` ["ld A, C", "cp A, 100"]
+        describe "if'" $ do
+            it "provides conditional execution for more complex conditions" $ do
+                let program = map show $ execLazyboy $ if' (A `lessThan` B) $ return ()
+                program `shouldBe` ["cp A, B", "jr c, .L1", ".L1:"]
+        describe "and" $ do
+            it "implements boolean AND for conditionals" $ do
+                let program = map show $ execLazyboy $ if' ((B `greaterThan` C) `Lazyboy.and` (A `equalTo` B)) $ return ()
+                program `shouldBe` [ "ld A, B"
+                                   , "cp A, C"
+                                   , "jr nc, .L1"
+                                   , "ld L, 1" 
+                                   , ".L1:"
+                                   , "cp A, B" 
+                                   , "jr nz, .L2"
+                                   , "ld A, 1"
+                                   , ".L2:"
+                                   , "and A, L"
+                                   , "jr z, .L3"
+                                   , ".L3:" ]
+        describe "or" $ do
+            it "implements boolean OR for conditionals" $ do
+                let program = map show $ execLazyboy $ if' ((C `greaterThan` (5 :: Word8)) `Lazyboy.or` (A `equalTo` C)) $ return ()
+                program `shouldBe` [ "ld A, C"
+                                   , "cp A, 5"
+                                   , "jr nc, .L1"
+                                   , "ld L, 1" 
+                                   , ".L1:"
+                                   , "cp A, C" 
+                                   , "jr nz, .L2"
+                                   , "ld A, 1"
+                                   , ".L2:"
+                                   , "or A, L"
+                                   , "jr z, .L3"
+                                   , ".L3:" ]
+ 
 
     describe "Lazyboy.Target.ASM" $ do
         describe "show" $ do

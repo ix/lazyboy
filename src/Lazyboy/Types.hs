@@ -36,7 +36,7 @@ data Location = Address Word16 | Name Label
 
 -- | A type representing Condition flags on the hardware.
 data Condition = Zero | NonZero | Carry | NoCarry
-  deriving (Eq)
+  deriving (Read, Show, Eq)
 
 -- | Named 8-bit registers.
 data Register8 = A | B | C | D | E | H | L

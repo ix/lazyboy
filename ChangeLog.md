@@ -1,5 +1,9 @@
 # Changelog for Lazyboy
 
+# 0.2.1.0
+- Added compound conditionals, including boolean AND, OR support.
+- Added tests for conditionals.
+
 # 0.2.0.0
 - Started versioning.
 - Formatted as a library package.
