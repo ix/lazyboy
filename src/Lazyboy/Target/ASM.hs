@@ -82,7 +82,7 @@ instance Show Instruction where
     show (LDrrnn PC _) = throw AttemptedAFPCLoad
     show (LDrrnn r1 v1)  = printf "ld %s, %s" r1 v1
 
-    show (LDSPHL) = printf "%ld SP, HL"
+    show (LDSPHL) = printf "ld SP, HL"
 
     -- stack manipulation
     show (PUSH SP) = throw InvalidStackOperation
@@ -103,8 +103,8 @@ instance Show Instruction where
     show (JPif c v1@(Name (Local _))) = printf "jr %s, %s" c v1
 
     -- call and return
-    show (CALL v1) = printf "call $%X" v1
-    show (CALLif c v1) = printf "call %s, $%X" c v1
+    show (CALL v1) = printf "call %s" v1
+    show (CALLif c v1) = printf "call %s, %s" c v1
     show (RET) = printf "ret"
     show (RETif c) = printf "ret %s" c
     show (RETi) = printf "reti"
