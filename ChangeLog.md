@@ -1,5 +1,10 @@
 # Changelog for Lazyboy
 
+# 0.2.2.0
+- Added a Prelude module which provides overloaded operators.
+- Updated the example in Main.hs to use the newer syntax.
+- Updated README to match the newer syntax.
+
 # 0.2.1.1
 - Added a lot of instruction tests and fix some bugs.
 
