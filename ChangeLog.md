@@ -1,5 +1,8 @@
 # Changelog for Lazyboy
 
+# 0.2.2.1
+- Added `while` to `Lazyboy.Control` and added a test case.
+
 # 0.2.2.0
 - Added a Prelude module which provides overloaded operators.
 - Updated the example in Main.hs to use the newer syntax.

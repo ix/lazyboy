@@ -191,6 +191,18 @@ main = hspec $ do
                                    , "or A, L"
                                    , "jr z, .L3"
                                    , ".L3:" ]
+        describe "while" $ do
+            it "implements an imperative WHILE loop with a condition" $ do
+                let program = map show $ execLazyboy $ while (A `Lazyboy.notEqualTo` (55 :: Word8)) $ write (Address 0x0000) 0xA
+                program `shouldBe` [ ".L1:"
+                                   , "cp A, 55"
+                                   , "jr nz, .L3"
+                                   , "jr .L2"
+                                   , ".L3:"
+                                   , "ld HL, $0"
+                                   , "ld [HL], 10"
+                                   , "jr .L1"
+                                   , ".L2:" ]
 
     describe "Lazyboy.Target.ASM" $ do
         describe "show" $ do

@@ -17,6 +17,7 @@ module Lazyboy.Control where
 import           Control.Monad.Trans.RWS
 import           Data.Word
 import           Lazyboy.Types
+import           Prelude                 hiding (not)
 
 -- | Get a label, and in the process increment the counter used to track labels.
 -- this provides a safe interface to label retrieval and utilization.
@@ -87,7 +88,7 @@ cond condition block = do
   tell [JPif condition (Name label)]
   a <- block
   tell [LABEL label]
-  return a 
+  return a
 
 -- | A typeclass for comparisons between registers and values.
 class Comparable a b where
@@ -98,25 +99,25 @@ class Comparable a b where
 
 -- | An instance for comparing two 8-bit registers.
 instance Comparable Register8 Register8 where
-  equalTo A r      = tell [CPr r]            >> return NonZero
-  equalTo r r'     = tell [LDrr A r, CPr r'] >> return NonZero
-  notEqualTo A r   = equalTo A r             >> return Zero
-  notEqualTo r r'  = equalTo r r'            >> return Zero
-  greaterThan A r  = equalTo A r             >> return NoCarry
-  greaterThan r r' = equalTo r r'            >> return NoCarry
-  lessThan A r     = equalTo A r             >> return Carry
-  lessThan r r'    = equalTo r r'            >> return Carry
+  equalTo A r  = tell [CPr r]            >> return NonZero
+  equalTo r r' = tell [LDrr A r, CPr r'] >> return NonZero
+  notEqualTo A r  = equalTo A r          >> return Zero
+  notEqualTo r r' = equalTo r r'         >> return Zero
+  greaterThan A r  = equalTo A r         >> return NoCarry
+  greaterThan r r' = equalTo r r'        >> return NoCarry
+  lessThan A r  = equalTo A r            >> return Carry
+  lessThan r r' = equalTo r r'           >> return Carry
 
 -- | An instance for comparing an 8-bit register and a Word8.
 instance Comparable Register8 Word8 where
-  equalTo A n      = tell [CPn n]            >>  return NonZero  
-  equalTo r n      = tell [LDrr A r, CPn n]  >>  return NonZero  
-  notEqualTo A n   = equalTo A n             >>  return Zero  
-  notEqualTo r n   = equalTo r n             >>  return Zero  
-  greaterThan A n  = equalTo A n             >>  return NoCarry  
-  greaterThan r n  = equalTo r n             >>  return NoCarry  
-  lessThan A n     = equalTo A n             >>  return Carry  
-  lessThan r n     = equalTo r n             >>  return Carry 
+  equalTo A n = tell [CPn n]            >>  return NonZero
+  equalTo r n = tell [LDrr A r, CPn n]  >>  return NonZero
+  notEqualTo A n = equalTo A n          >>  return Zero
+  notEqualTo r n = equalTo r n          >>  return Zero
+  greaterThan A n = equalTo A n         >>  return NoCarry
+  greaterThan r n = equalTo r n         >>  return NoCarry
+  lessThan A n = equalTo A n            >>  return Carry
+  lessThan r n = equalTo r n            >>  return Carry
 
 -- | An instance for comparing a Word8 and an 8-bit register (this is an alias).
 instance Comparable Word8 Register8 where
@@ -129,7 +130,7 @@ instance Comparable Word8 Register8 where
 -- another action baed on the state of that condition flag.
 if' :: Lazyboy Condition -> Lazyboy a -> Lazyboy a
 if' condition block = do
-  flag <- condition 
+  flag <- condition
   cond flag block
 
 -- | Boolean NOT operation for inverting Condition flags.
@@ -142,7 +143,7 @@ not action = do
     Carry   -> NoCarry
     NoCarry -> Carry
 
--- | Assign boolean values to two registers based on the result flags of 
+-- | Assign boolean values to two registers based on the result flags of
 -- some conditions and then AND them and return the result.
 and :: Lazyboy Condition -> Lazyboy Condition -> Lazyboy Condition
 and a b = do
@@ -167,3 +168,15 @@ or a b = do
     tell [LDrn A 1]
   tell [ORr L]
   return Zero
+
+-- | An implementation of an imperative "while" loop.
+while :: Lazyboy Condition -> Lazyboy () -> Lazyboy ()
+while condition block = do
+  loop <- getLocalLabel
+  skip <- getLocalLabel
+  tell [LABEL loop]
+  if' (not condition) $ do
+    tell [JP $ Name skip]
+  block
+  tell [JP $ Name loop]
+  tell [LABEL skip]
