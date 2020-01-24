@@ -7,3 +7,4 @@ dmg.cabal
 *.sav
 *.obj
 example/*.asm
+TAGS

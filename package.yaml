@@ -3,7 +3,7 @@ version:             0.2.2.1
 github:              "ix/lazyboy"
 license:             BSD3
 author:              "Rose"
-maintainer:          "rose@lain.org.uk"
+maintainer:          "rose@empty.town"
 copyright:           "2019 Rose"
 category:            DSL, Compiler
 synopsis:            An EDSL for programming the Game Boy.
@@ -11,9 +11,6 @@ synopsis:            An EDSL for programming the Game Boy.
 extra-source-files:
 - README.md
 - ChangeLog.md
-
-# templates
-data-files: templates/*.mustache
 
 # Metadata used when publishing your package
 # synopsis:            Short description of your package
@@ -34,6 +31,9 @@ dependencies:
 
 library:
   source-dirs: src
+  ghc-options:
+    - -Wall
+    - -Werror
 
 #executables:
 #  lazyboy:
