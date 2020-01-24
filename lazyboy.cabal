@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2e188d37c337653022745dee05963ec9f8b6ba11462b5dd55a67f5fd0c096157
+-- hash: 0f1bfcf13de578abadc849623f3f5910fd8d519306424299f65356050cb2f888
 
 name:           lazyboy
 version:        0.2.2.1
@@ -45,8 +45,7 @@ library
   build-depends:
       aeson >=1.4.6 && <1.5
     , base >=4.12.0 && <4.13
-    , hspec >=2.7.1 && <2.8
-    , neat-interpolation
+    , neat-interpolation >=0.3.2 && <0.4
     , text >=1.2.3 && <1.3
     , transformers >=0.5.6 && <0.6
   default-language: Haskell2010
@@ -64,7 +63,7 @@ test-suite lazyboy-test
     , base >=4.12.0 && <4.13
     , hspec >=2.7.1 && <2.8
     , lazyboy
-    , neat-interpolation
+    , neat-interpolation >=0.3.2 && <0.4
     , text >=1.2.3 && <1.3
     , transformers >=0.5.6 && <0.6
   default-language: Haskell2010
