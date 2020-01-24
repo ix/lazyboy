@@ -62,6 +62,7 @@ embedFile file = do
 
 -- | Embed an image and return a (global) label for it.
 -- A jump over the block of data is added to prevent the image data being executed.
+embedImage :: FilePath -> Lazyboy Label
 embedImage = embedFile
 
 -- | Embed a sequence of bytes into the file and return a (global) label for it.

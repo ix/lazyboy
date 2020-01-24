@@ -13,9 +13,6 @@
 
 module Lazyboy.Types where
 
-import           Control.Monad                (replicateM)
-import           Control.Monad.IO.Class       (liftIO)
-import           Control.Monad.Trans.Class    (lift)
 import           Control.Monad.Trans.RWS.Lazy
 import           Data.Int
 import           Data.Word

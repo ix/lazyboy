@@ -15,18 +15,14 @@
 module Lazyboy.Target.ASM where
 
 import           Control.Exception
-import           Control.Monad.Trans.RWS.Lazy
-import           Data.Aeson
-import           Data.Char                    (toLower)
 import           Data.List                    (intercalate)
-import           Data.Text.Lazy               (Text)
-import qualified Data.Text.Lazy.IO            as T
+import           Data.Text                    (Text)
 import           Data.Word
-import           Debug.Trace
 import           Lazyboy.Types
-import           Paths_lazyboy
-import           Text.Microstache
+import           Lazyboy.Templates            (templatize, basic)
 import           Text.Printf
+
+import qualified Data.Text                    as T
 
 -- | Lazyboy exception type.
 data LazyboyException =
@@ -155,7 +151,7 @@ instance Show Instruction where
     show (ADDHLrr DE) = printf "add HL, DE"
     show (ADDHLrr HL) = printf "add HL, HL"
     show (ADDHLrr SP) = printf "add HL, SP"
-    show (ADDHLrr r1) = throw IllegalHLAddition
+    show (ADDHLrr _) = throw IllegalHLAddition
     show (INCrr BC) = printf "inc BC"
     show (INCrr DE) = printf "inc DE"
     show (INCrr HL) = printf "inc HL"
@@ -250,9 +246,6 @@ instance PrintfArg Location where
 -- This function makes use of a "bare" template, which
 -- sets up an appropriate start location for the body of the program
 -- and defines an entry point label 'main'.
-compileROM :: Lazyboy a -> IO Text
-compileROM code = do
-    templatePath <- getDataFileName "templates/bare.mustache"
-    tem <- compileMustacheFile templatePath
-    return $ renderMustache tem $ object [ "body" .= body ]
-    where body = map show $ execLazyboy code
+compileROM :: Lazyboy a -> Text
+compileROM code = templatize basic body
+  where body = T.unlines $ map (T.pack . show) $ execLazyboy code

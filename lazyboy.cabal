@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: aeeea6ee876e0a4a3d8063b499032573f9f8044e609e75636189e1d9d5fc8d6c
+-- hash: 2e188d37c337653022745dee05963ec9f8b6ba11462b5dd55a67f5fd0c096157
 
 name:           lazyboy
 version:        0.2.2.1
@@ -14,7 +14,7 @@ category:       DSL, Compiler
 homepage:       https://github.com/ix/lazyboy#readme
 bug-reports:    https://github.com/ix/lazyboy/issues
 author:         Rose
-maintainer:     rose@lain.org.uk
+maintainer:     rose@empty.town
 copyright:      2019 Rose
 license:        BSD3
 license-file:   LICENSE
@@ -22,8 +22,6 @@ build-type:     Simple
 extra-source-files:
     README.md
     ChangeLog.md
-data-files:
-    templates/bare.mustache
 
 source-repository head
   type: git
@@ -37,16 +35,18 @@ library
       Lazyboy.IO
       Lazyboy.Prelude
       Lazyboy.Target.ASM
+      Lazyboy.Templates
       Lazyboy.Types
   other-modules:
       Paths_lazyboy
   hs-source-dirs:
       src
+  ghc-options: -Wall -Werror -Wno-orphans
   build-depends:
       aeson >=1.4.6 && <1.5
     , base >=4.12.0 && <4.13
     , hspec >=2.7.1 && <2.8
-    , microstache >=1.0.1 && <1.1
+    , neat-interpolation
     , text >=1.2.3 && <1.3
     , transformers >=0.5.6 && <0.6
   default-language: Haskell2010
@@ -64,7 +64,7 @@ test-suite lazyboy-test
     , base >=4.12.0 && <4.13
     , hspec >=2.7.1 && <2.8
     , lazyboy
-    , microstache >=1.0.1 && <1.1
+    , neat-interpolation
     , text >=1.2.3 && <1.3
     , transformers >=0.5.6 && <0.6
   default-language: Haskell2010
