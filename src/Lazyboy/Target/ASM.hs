@@ -14,15 +14,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Lazyboy.Target.ASM where
 
-import           Control.Exception
-import           Data.List                    (intercalate)
-import           Data.Text                    (Text)
-import           Data.Word
-import           Lazyboy.Types
-import           Lazyboy.Templates            (templatize, basic)
-import           Text.Printf
+import Control.Exception
+import Data.List         (intercalate)
+import Data.Text         (Text)
+import Data.Word
+import Lazyboy.Templates (basic, templatize)
+import Lazyboy.Types
+import Text.Printf
 
-import qualified Data.Text                    as T
+import qualified Data.Text as T
 
 -- | Lazyboy exception type.
 data LazyboyException =
@@ -68,17 +68,17 @@ instance Show Instruction where
     show (LDnnA v1)   = printf "ld [%s], A" v1
     show (LDAIO v1)   = printf "ldh A, [$FF00+$%X]" v1
     show (LDIOA v1)   = printf "ldh [$FF00+$%X], A" v1
-    show (LDAIOC)     = printf "ldh A, [$FF00+C]"
-    show (LDIOCA)     = printf "ldh [$FF00+C], A"
-    show (LDHLAI)     = printf "ld [HL+], A"
-    show (LDAHLI)     = printf "ld A, [HL+]"
+    show LDAIOC       = printf "ldh A, [$FF00+C]"
+    show LDIOCA       = printf "ldh [$FF00+C], A"
+    show LDHLAI       = printf "ld [HL+], A"
+    show LDAHLI       = printf "ld A, [HL+]"
 
     -- handle some special cases for ld rr,nn
     show (LDrrnn AF _) = throw AttemptedAFPCLoad
     show (LDrrnn PC _) = throw AttemptedAFPCLoad
     show (LDrrnn r1 v1)  = printf "ld %s, %s" r1 v1
 
-    show (LDSPHL) = printf "ld SP, HL"
+    show LDSPHL = printf "ld SP, HL"
 
     -- stack manipulation
     show (PUSH SP) = throw InvalidStackOperation
@@ -93,7 +93,7 @@ instance Show Instruction where
     show (JP v1@(Address _)) = printf "jp %s" v1
     show (JP v1@(Name (Global _))) = printf "jp %s" v1
     show (JP v1@(Name (Local _))) = printf "jr %s" v1
-    show (JPHL) = printf "jp HL"
+    show JPHL = printf "jp HL"
     show (JPif c v1@(Address _)) = printf "jp %s, %s" c v1
     show (JPif c v1@(Name (Global _))) = printf "jp %s, %s" c v1
     show (JPif c v1@(Name (Local _))) = printf "jr %s, %s" c v1
@@ -101,9 +101,9 @@ instance Show Instruction where
     -- call and return
     show (CALL v1) = printf "call %s" v1
     show (CALLif c v1) = printf "call %s, %s" c v1
-    show (RET) = printf "ret"
+    show RET = printf "ret"
     show (RETif c) = printf "ret %s" c
-    show (RETi) = printf "reti"
+    show RETi = printf "reti"
 
     show (RST 0x00) = printf "RST $00"
     show (RST 0x08) = printf "RST $08"
@@ -118,35 +118,35 @@ instance Show Instruction where
     -- arithmetic and comparisons
     show (ADDAr r1) = printf "add A, %s" r1
     show (ADDAn v) = printf "add A, %d" v
-    show (ADDHL) = printf "add A, [HL]"
+    show ADDHL = printf "add A, [HL]"
     show (ADCAr r1) = printf "adc A, %s" r1
     show (ADCAn v) = printf "adc A, %d" v
-    show (ADCHL) = printf "adc A, [HL]"
+    show ADCHL = printf "adc A, [HL]"
     show (SUBAr r1) = printf "sub A, %s" r1
     show (SUBAn v) = printf "sub A, %d" v
-    show (SUBHL) = printf "sub A, [HL]"
+    show SUBHL = printf "sub A, [HL]"
     show (SBCAr r1) = printf "sbc A, %s" r1
     show (SBCAn v) = printf "sbc A, %d" v
-    show (SBCAHL) = printf "sbc A, [HL]"
+    show SBCAHL = printf "sbc A, [HL]"
 
     show (ANDr r1) = printf "and A, %s" r1
     show (ANDn v) = printf "and A, %d" v
-    show (ANDHL) = printf "and A, [HL]"
+    show ANDHL = printf "and A, [HL]"
     show (XORr r1) = printf "xor A, %s" r1
     show (XORn v) = printf "xor A, %d" v
-    show (XORHL) = printf "xor A, [HL]"
+    show XORHL = printf "xor A, [HL]"
     show (ORr r1) = printf "or A, %s" r1
     show (ORn v) = printf "or A, %d" v
-    show (ORHL) = printf "or A, [HL]"
+    show ORHL = printf "or A, [HL]"
     show (CPr r1) = printf "cp A, %s" r1
     show (CPn v) = printf "cp A, %d" v
-    show (CPHL) = printf "cp A, [HL]"
+    show CPHL = printf "cp A, [HL]"
     show (INCr r1) = printf "inc %s" r1
-    show (INCHL) = printf "inc [HL]"
+    show INCHL = printf "inc [HL]"
     show (DECr r1) = printf "dec %s" r1
-    show (DECHL) = printf "dec [HL]"
-    show (DAA) = printf "daa"
-    show (CPL) = printf "cpl"
+    show DECHL = printf "dec [HL]"
+    show DAA = printf "daa"
+    show CPL = printf "cpl"
     show (ADDHLrr BC) = printf "add HL, BC"
     show (ADDHLrr DE) = printf "add HL, DE"
     show (ADDHLrr HL) = printf "add HL, HL"
@@ -164,35 +164,35 @@ instance Show Instruction where
     show (DECrr r1) = throw $ IllegalModification r1
 
     -- Rotate & shift
-    show (RLCA) = printf "rlca"
-    show (RLA) = printf "rla"
-    show (RRCA) = printf "rrca"
-    show (RRA) = printf "rra"
+    show RLCA = printf "rlca"
+    show RLA = printf "rla"
+    show RRCA = printf "rrca"
+    show RRA = printf "rra"
     show (RLC r1) = printf "rlc %s" r1
-    show (RLCHL) = printf "rlc [HL]"
+    show RLCHL = printf "rlc [HL]"
     show (RL r1) = printf "rl %s" r1
-    show (RLHL) = printf "rl [HL]"
+    show RLHL = printf "rl [HL]"
     show (RRC r1) = printf "rrc %s" r1
-    show (RRCHL) = printf "rrc [HL]"
+    show RRCHL = printf "rrc [HL]"
     show (RR r1) = printf "rr %s" r1
-    show (RRHL) = printf "rr [HL]"
+    show RRHL = printf "rr [HL]"
     show (SLA r1) = printf "sla %s" r1
-    show (SLAHL) = printf "sla [HL]"
+    show SLAHL = printf "sla [HL]"
     show (SWAP r1) = printf "swap %s" r1
-    show (SWAPHL) = printf "swap [HL]"
+    show SWAPHL = printf "swap [HL]"
     show (SRA r1) = printf "sra %s" r1
-    show (SRAHL) = printf "sra [HL]"
+    show SRAHL = printf "sra [HL]"
     show (SRL r1) = printf "srl %s" r1
-    show (SRLHL) = printf "srl [HL]"
+    show SRLHL = printf "srl [HL]"
 
     -- CPU control
-    show (CCF) = printf "ccf"
-    show (SCF) = printf "scf"
-    show (NOP) = printf "nop"
-    show (HALT) = printf "halt"
-    show (STOP) = printf "stop"
-    show (DI) = printf "di"
-    show (EI) = printf "ei"
+    show CCF = printf "ccf"
+    show SCF = printf "scf"
+    show NOP = printf "nop"
+    show HALT = printf "halt"
+    show STOP = printf "stop"
+    show DI = printf "di"
+    show EI = printf "ei"
 
     -- Bit manipulation
     show (BITnr v r1)
@@ -239,8 +239,8 @@ instance PrintfArg Label where
     formatArg (Global v) = formatString $ "L" ++ show v
 
 instance PrintfArg Location where
-    formatArg (Address v)  = formatString $ (printf "$%X" v :: String)
-    formatArg (Name label) = formatString $ (printf "%s" label :: String)
+    formatArg (Address v)  = formatString (printf "$%X" v :: String)
+    formatArg (Name label) = formatString (printf "%s" label :: String)
 
 -- | Compiles an action to an assembly source file.
 -- This function makes use of a "bare" template, which

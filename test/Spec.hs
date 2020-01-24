@@ -16,6 +16,8 @@ import           Lazyboy
 import           Lazyboy.Target.ASM
 import           Test.Hspec
 
+{-# ANN module "HLint: ignore" #-}
+
 disallow cmd = evaluate cmd `shouldThrow` anyException
 
 main :: IO ()

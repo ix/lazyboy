@@ -19,6 +19,8 @@ import           Data.Word
 import           Lazyboy.Types
 import           Prelude                 hiding (not)
 
+{-# ANN module "HLint: ignore Reduce duplication" #-}
+
 -- | Get a label, and in the process increment the counter used to track labels.
 -- this provides a safe interface to label retrieval and utilization.
 getLabel :: Lazyboy Integer
@@ -149,10 +151,10 @@ not action = do
 and :: Lazyboy Condition -> Lazyboy Condition -> Lazyboy Condition
 and a b = do
   a' <- a
-  cond a' $ do
+  cond a' $
     tell [LDrn L 1]
   b' <- b
-  cond b' $ do
+  cond b' $
     tell [LDrn A 1]
   tell [ANDr L]
   return Zero
@@ -162,10 +164,10 @@ and a b = do
 or :: Lazyboy Condition -> Lazyboy Condition -> Lazyboy Condition
 or a b = do
   a' <- a
-  cond a' $ do
+  cond a' $
     tell [LDrn L 1]
   b' <- b
-  cond b' $ do
+  cond b' $
     tell [LDrn A 1]
   tell [ORr L]
   return Zero
@@ -176,7 +178,7 @@ while condition block = do
   loop <- getLocalLabel
   skip <- getLocalLabel
   tell [LABEL loop]
-  if' (not condition) $ do
+  if' (not condition) $
     tell [JP $ Name skip]
   block
   tell [JP $ Name loop]

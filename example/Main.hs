@@ -12,6 +12,6 @@ main = rom >>= T.putStrLn
     where rom = compileROM $ do
             byte A 0xDE
             byte B 0xDE
-            if' ((A == (0xDE :: Word8)) && (A == B)) $ do
+            if' ((A == (0xDE :: Word8)) && (A == B)) $
                 write (Address wram0) 0xDE
             freeze
