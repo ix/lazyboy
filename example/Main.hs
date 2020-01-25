@@ -4,16 +4,17 @@
 module Main where
 
 
-import Data.Word          (Word8)
-import Lazyboy
-import Lazyboy.Prelude
-import Lazyboy.Target.ASM
-import Prelude            hiding ((&&), (/=), (<), (==), (>), (||))
+import Control.Monad.Trans.Except (runExcept)
+import Data.Word                  (Word8)
+import Lazyboy                    
+import Lazyboy.Prelude            ((&&), (==))
+import Lazyboy.Target.ASM         (lazyboy)
+import Prelude                    hiding ((&&), (/=), (<), (==), (>), (||))
 
 import qualified Data.Text.IO as T
 
 main :: IO ()
-main = T.putStrLn $ compileROM $ do
+main = lazyboy $ do
   byte A 0xDE
   byte B 0xDE
   if' ((A == (0xDE :: Word8)) && (A == B)) $

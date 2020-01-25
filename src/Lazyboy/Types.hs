@@ -11,11 +11,15 @@
     including registers and instructions.
 -}
 
+{-# LANGUAGE OverloadedStrings #-}
+
 module Lazyboy.Types where
 
-import           Control.Monad.Trans.RWS.Lazy
-import           Data.Int
-import           Data.Word
+import Control.Monad.Trans.RWS.Lazy
+import Data.Int
+import Data.Word
+import Formatting                   (formatToString, (%))
+import Formatting.ShortFormatters   (x)
 
 -- | A type alias that defines Lazyboy as a specialization of the
 -- RWS monad transformer stack. Reader goes unused, Writer is utilized
@@ -31,9 +35,19 @@ execLazyboy m = snd $ execRWS m () 1
 data Location = Address Word16 | Name Label
   deriving (Eq)
 
+instance Show Location where
+    show (Address v)  = formatToString ("$" % x) v
+    show (Name label) = show label
+
 -- | A type representing Condition flags on the hardware.
 data Condition = Zero | NonZero | Carry | NoCarry
-  deriving (Read, Show, Eq)
+  deriving (Eq)
+
+instance Show Condition where
+    show Zero    = "z"
+    show NonZero = "nz"
+    show Carry   = "c"
+    show NoCarry = "nc"
 
 -- | Named 8-bit registers.
 data Register8 = A | B | C | D | E | H | L
@@ -47,8 +61,12 @@ data Register16 = BC | DE | HL | AF | SP | PC
 data Label = Local Integer | Global Integer
   deriving (Eq)
 
+instance Show Label where
+    show (Local v)  = ".L" ++ show v
+    show (Global v) = "L" ++ show v
+
 -- | Type-level representations of instructions and primitive special forms.
-data Instruction = 
+data Instruction =
     LDrr Register8 Register8   -- ^ Load the value in one Register8 into another.
   | LDrn Register8 Word8       -- ^ Load the immediate Word8 into a Register8.
   | LDrHL Register8            -- ^ Load the Word8 stored at the address in HL into a Register8.
@@ -76,9 +94,9 @@ data Instruction =
   | JPHL                      -- ^ Immediately and unconditionally jump to the value contained in HL.
   | JPif Condition Location   -- ^ Conditionally jump to a Location.
   | CALL Location             -- ^ Call a Location.
-  | CALLif Condition Location -- ^ Conditionally call a Location. 
+  | CALLif Condition Location -- ^ Conditionally call a Location.
   | RET                       -- ^ Return from a labelled block.
-  | RETif Condition           -- ^ Conditionally return from a labelled block. 
+  | RETif Condition           -- ^ Conditionally return from a labelled block.
   | RETi                      -- ^ Return and enable interrupts.
   | RST Word8                 -- ^ Call a restart vector.
 
