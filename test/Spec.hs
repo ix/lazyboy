@@ -10,15 +10,21 @@
     A test suite for Lazyboy.
 -}
 
-import           Control.Exception  (evaluate)
+{-# LANGUAGE OverloadedStrings #-}
+
 import           Data.Word
 import           Lazyboy
-import           Lazyboy.Target.ASM
+import           Lazyboy.Target.ASM 
 import           Test.Hspec
+import           Control.Monad.Trans.Except
+import           Data.Either 
 
-{-# ANN module "HLint: ignore" #-}
+{-# ANN module ("HLint: ignore" :: String) #-}
 
-disallow cmd = evaluate cmd `shouldThrow` anyException
+disallow :: Except a b -> Expectation
+disallow = (`shouldBe` True) . isLeft . runExcept 
+
+instance Show Instruction
 
 main :: IO ()
 main = hspec $ do
@@ -39,34 +45,34 @@ main = hspec $ do
                 pack (BackgroundPalette White Light White White) `shouldBe` 16
         describe "disableLCD" $ do 
             it "turns off the lcd" $ do
-                let program = map show $ execLazyboy disableLCD
-                program `shouldBe` ["ld HL, $FF40", "ld [HL], 0"]
+              let program = runExcept $ mapM compile $ execLazyboy disableLCD
+              program `shouldBe` Right ["ld HL, $ff40", "ld [HL], 0"]
         describe "setLCDControl" $ do
             it "sets the lcd status" $ do
-                let program = map show $ execLazyboy $ setLCDControl $ defaultLCDControl { lcdBackgroundEnable = True }
-                program `shouldBe` ["ld HL, $FF40", "ld [HL], 1"]
+                let program = runExcept $ mapM compile $ execLazyboy $ setLCDControl $ defaultLCDControl { lcdBackgroundEnable = True }
+                program `shouldBe` Right ["ld HL, $ff40", "ld [HL], 1"]
         describe "byte" $ do
             it "writes a byte into a register" $ do
-                let program = map show $ execLazyboy $ byte A 90
-                program `shouldBe` ["ld A, 90"] 
+                let program = runExcept $ mapM compile $ execLazyboy $ byte A 90
+                program `shouldBe` Right ["ld A, 90"] 
         describe "setBackgroundPalette" $ do
             it "sets the background palette" $ do
-                let def = map show $ execLazyboy $ setBackgroundPalette defaultPalette
-                let alt = map show $ execLazyboy $ setBackgroundPalette $ BackgroundPalette White Light Dark Black
-                def `shouldBe` ["ld HL, $FF47", "ld [HL], 228"]
-                alt `shouldBe` ["ld HL, $FF47", "ld [HL], 27"]
+                let def = runExcept $ mapM compile $ execLazyboy $ setBackgroundPalette defaultPalette
+                let alt = runExcept $ mapM compile $ execLazyboy $ setBackgroundPalette $ BackgroundPalette White Light Dark Black
+                def `shouldBe` Right ["ld HL, $ff47", "ld [HL], 228"]
+                alt `shouldBe` Right ["ld HL, $ff47", "ld [HL], 27"]
         describe "onVblank" $ do
             it "waits for vblank before calling some code" $ do
-                let program = map show $ execLazyboy $ onVblank $ return ()
-                program `shouldBe` [".L1:", "ld A, [$FF44]", "cp A, 145", "jr nz, .L1"]
+                let program = runExcept $ mapM compile $ execLazyboy $ onVblank $ return ()
+                program `shouldBe` Right [".L1:", "ld A, [$ff44]", "cp A, 145", "jr nz, .L1"]
                 
 
     describe "Lazyboy.Types.execLazyboy" $ do
         it "compiles nested sequences in order" $ do
-            let sequence = execLazyboy $ do
+            let program = execLazyboy $ do
                     write (Address 0x2000) 0x97
                     write (Address 0x1000) 0x98
-            sequence `shouldBe` [LDrrnn HL (Address 0x2000), LDHLn 0x97, LDrrnn HL (Address 0x1000), LDHLn 0x98]
+            program `shouldBe` [LDrrnn HL (Address 0x2000), LDHLn 0x97, LDrrnn HL (Address 0x1000), LDHLn 0x98]
 
     describe "Lazyboy.Control" $ do
         describe "cond" $ do
@@ -80,6 +86,7 @@ main = hspec $ do
                         cond Zero $ do
                             cond NonZero $ do
                                 freeze
+                                
                 program `shouldBe` [ JPif Zero $ Name $ Local 1
                                 , JPif NonZero $ Name $ Local 2
                                 , LABEL $ Global 3
@@ -91,20 +98,20 @@ main = hspec $ do
                                 ]
         describe "withLabel" $ do
             it "creates an appropriately formatted global label" $ do
-                let program = map show $ execLazyboy $ do
-                        withLabel $ \label -> do
+                let program = runExcept $ mapM compile $ execLazyboy $ do
+                        withLabel $ const $
                             write (Address 0xC000) 0x97
-                program `shouldBe` [ "L1:"
-                                   , "ld HL, $C000"
+                program `shouldBe` Right [ "L1:"
+                                   , "ld HL, $c000"
                                    , "ld [HL], 151"
                                    ]
         describe "withLocalLabel" $ do
             it "creates an appropriately formatted local label" $ do
-                let program = map show $ execLazyboy $ do
-                        withLocalLabel $ \label -> do
+                let program = runExcept $ mapM compile $ execLazyboy $ do
+                        withLocalLabel $ const $
                             write (Address 0xC000) 0x97
-                program `shouldBe` [ ".L1:"
-                                   , "ld HL, $C000"
+                program `shouldBe` Right [ ".L1:"
+                                   , "ld HL, $c000"
                                    , "ld [HL], 151"
                                    ]
         describe "embedImage" $ do
@@ -121,52 +128,52 @@ main = hspec $ do
                 flags `shouldBe` [NonZero, Zero, NoCarry, Carry]
         describe "equalTo" $ do
             it "checks equality between two values" $ do
-                let ab = map show $ execLazyboy $ A `equalTo` B
-                let bc = map show $ execLazyboy $ B `equalTo` C
-                let an = map show $ execLazyboy $ A `equalTo` (5 :: Word8)
-                let nc = map show $ execLazyboy $ (100 :: Word8) `equalTo` C
-                ab `shouldBe` ["cp A, B"]
-                bc `shouldBe` ["ld A, B", "cp A, C"]
-                an `shouldBe` ["cp A, 5"]
-                nc `shouldBe` ["ld A, C", "cp A, 100"]
+                let ab = runExcept $ mapM compile $ execLazyboy $ A `equalTo` B
+                let bc = runExcept $ mapM compile $ execLazyboy $ B `equalTo` C
+                let an = runExcept $ mapM compile $ execLazyboy $ A `equalTo` (5 :: Word8)
+                let nc = runExcept $ mapM compile $ execLazyboy $ (100 :: Word8) `equalTo` C
+                ab `shouldBe` Right ["cp A, B"]
+                bc `shouldBe` Right ["ld A, B", "cp A, C"]
+                an `shouldBe` Right ["cp A, 5"]
+                nc `shouldBe` Right ["ld A, C", "cp A, 100"]
         describe "notEqualTo" $ do
             it "checks inequality between two values" $ do
-                let ab = map show $ execLazyboy $ A `notEqualTo` B
-                let bc = map show $ execLazyboy $ B `notEqualTo` C
-                let an = map show $ execLazyboy $ A `notEqualTo` (5 :: Word8)
-                let nc = map show $ execLazyboy $ (100 :: Word8) `notEqualTo` C
-                ab `shouldBe` ["cp A, B"]
-                bc `shouldBe` ["ld A, B", "cp A, C"]
-                an `shouldBe` ["cp A, 5"]
-                nc `shouldBe` ["ld A, C", "cp A, 100"]
+                let ab = runExcept $ mapM compile $ execLazyboy $ A `notEqualTo` B
+                let bc = runExcept $ mapM compile $ execLazyboy $ B `notEqualTo` C
+                let an = runExcept $ mapM compile $ execLazyboy $ A `notEqualTo` (5 :: Word8)
+                let nc = runExcept $ mapM compile $ execLazyboy $ (100 :: Word8) `notEqualTo` C
+                ab `shouldBe` Right ["cp A, B"]
+                bc `shouldBe` Right ["ld A, B", "cp A, C"]
+                an `shouldBe` Right ["cp A, 5"]
+                nc `shouldBe` Right ["ld A, C", "cp A, 100"]
         describe "greaterThan" $ do
             it "checks greater of two values" $ do
-                let ab = map show $ execLazyboy $ A `greaterThan` B
-                let bc = map show $ execLazyboy $ B `greaterThan` C
-                let an = map show $ execLazyboy $ A `greaterThan` (5 :: Word8)
-                let nc = map show $ execLazyboy $ (100 :: Word8) `greaterThan` C
-                ab `shouldBe` ["cp A, B"]
-                bc `shouldBe` ["ld A, B", "cp A, C"]
-                an `shouldBe` ["cp A, 5"]
-                nc `shouldBe` ["ld A, C", "cp A, 100"]
+                let ab = runExcept $ mapM compile $ execLazyboy $ A `greaterThan` B
+                let bc = runExcept $ mapM compile $ execLazyboy $ B `greaterThan` C
+                let an = runExcept $ mapM compile $ execLazyboy $ A `greaterThan` (5 :: Word8)
+                let nc = runExcept $ mapM compile $ execLazyboy $ (100 :: Word8) `greaterThan` C
+                ab `shouldBe` Right ["cp A, B"]
+                bc `shouldBe` Right ["ld A, B", "cp A, C"]
+                an `shouldBe` Right ["cp A, 5"]
+                nc `shouldBe` Right ["ld A, C", "cp A, 100"]
         describe "lessThan" $ do
             it "checks lesser of two values" $ do
-                let ab = map show $ execLazyboy $ A `lessThan` B
-                let bc = map show $ execLazyboy $ B `lessThan` C
-                let an = map show $ execLazyboy $ A `lessThan` (5 :: Word8)
-                let nc = map show $ execLazyboy $ (100 :: Word8) `lessThan` C
-                ab `shouldBe` ["cp A, B"]
-                bc `shouldBe` ["ld A, B", "cp A, C"]
-                an `shouldBe` ["cp A, 5"]
-                nc `shouldBe` ["ld A, C", "cp A, 100"]
+                let ab = runExcept $ mapM compile $ execLazyboy $ A `lessThan` B
+                let bc = runExcept $ mapM compile $ execLazyboy $ B `lessThan` C
+                let an = runExcept $ mapM compile $ execLazyboy $ A `lessThan` (5 :: Word8)
+                let nc = runExcept $ mapM compile $ execLazyboy $ (100 :: Word8) `lessThan` C
+                ab `shouldBe` Right ["cp A, B"]
+                bc `shouldBe` Right ["ld A, B", "cp A, C"]
+                an `shouldBe` Right ["cp A, 5"]
+                nc `shouldBe` Right ["ld A, C", "cp A, 100"]
         describe "if'" $ do
             it "provides conditional execution for more complex conditions" $ do
-                let program = map show $ execLazyboy $ if' (A `lessThan` B) $ return ()
-                program `shouldBe` ["cp A, B", "jr c, .L1", ".L1:"]
+                let program = runExcept $ mapM compile $ execLazyboy $ if' (A `lessThan` B) $ return ()
+                program `shouldBe` Right ["cp A, B", "jr c, .L1", ".L1:"]
         describe "and" $ do
             it "implements boolean AND for conditionals" $ do
-                let program = map show $ execLazyboy $ if' ((B `greaterThan` C) `Lazyboy.and` (A `equalTo` B)) $ return ()
-                program `shouldBe` [ "ld A, B"
+                let program = runExcept $ mapM compile $ execLazyboy $ if' ((B `greaterThan` C) `Lazyboy.and` (A `equalTo` B)) $ return ()
+                program `shouldBe` Right [ "ld A, B"
                                    , "cp A, C"
                                    , "jr nc, .L1"
                                    , "ld L, 1" 
@@ -180,8 +187,8 @@ main = hspec $ do
                                    , ".L3:" ]
         describe "or" $ do
             it "implements boolean OR for conditionals" $ do
-                let program = map show $ execLazyboy $ if' ((C `greaterThan` (5 :: Word8)) `Lazyboy.or` (A `equalTo` C)) $ return ()
-                program `shouldBe` [ "ld A, C"
+                let program = runExcept $ mapM compile $ execLazyboy $ if' ((C `greaterThan` (5 :: Word8)) `Lazyboy.or` (A `equalTo` C)) $ return ()
+                program `shouldBe` Right [ "ld A, C"
                                    , "cp A, 5"
                                    , "jr nc, .L1"
                                    , "ld L, 1" 
@@ -195,8 +202,8 @@ main = hspec $ do
                                    , ".L3:" ]
         describe "while" $ do
             it "implements an imperative WHILE loop with a condition" $ do
-                let program = map show $ execLazyboy $ while (A `Lazyboy.notEqualTo` (55 :: Word8)) $ write (Address 0x0000) 0xA
-                program `shouldBe` [ ".L1:"
+                let program = runExcept $ mapM compile $ execLazyboy $ while (A `Lazyboy.notEqualTo` (55 :: Word8)) $ write (Address 0x0000) 0xA
+                program `shouldBe` Right [ ".L1:"
                                    , "cp A, 55"
                                    , "jr nz, .L3"
                                    , "jr .L2"
@@ -207,168 +214,168 @@ main = hspec $ do
                                    , ".L2:" ]
 
     describe "Lazyboy.Target.ASM" $ do
-        describe "show" $ do
+        describe "compile" $ do
             it "disallows loading [AF] into A" $ do
-                disallow (show $ LDArr AF)
+                disallow (compile $ LDArr AF)
             it "disallows loading [SP] into A" $ do
-                disallow (show $ LDArr SP)
+                disallow (compile $ LDArr SP)
             it "disallows loading [PC] into A" $ do
-                disallow (show $ LDArr PC)
+                disallow (compile $ LDArr PC)
             it "disallows loading A into [AF]" $ do
-                disallow (show $ LDrrA AF)
+                disallow (compile $ LDrrA AF)
             it "disallows loading A into [SP]" $ do
-                disallow (show $ LDrrA SP)
+                disallow (compile $ LDrrA SP)
             it "disallows loading A into [PC]" $ do
-                disallow (show $ LDrrA PC)
+                disallow (compile $ LDrrA PC)
             it "disallows loading a 16 bit value into AF" $ do
-                disallow $ show $ LDrrnn AF $ Address 0x00
+                disallow $ compile $ LDrrnn AF $ Address 0x00
             it "disallows loading a 16 bit value into PC" $ do
-                disallow $ show $ LDrrnn PC $ Address 0x00
+                disallow $ compile $ LDrrnn PC $ Address 0x00
             it "disallows pushing stack pointer" $ do
-                disallow (show $ PUSH SP)
+                disallow (compile $ PUSH SP)
             it "disallows pushing program counter" $ do
-                disallow (show $ PUSH PC)
+                disallow (compile $ PUSH PC)
             it "disallows popping stack pointer" $ do
-                disallow (show $ POP SP)
+                disallow (compile $ POP SP)
             it "disallows popping program counter" $ do
-                disallow (show $ POP PC)
+                disallow (compile $ POP PC)
             it "disallows an invalid RST vector value" $ do
-                disallow (show $ RST 0x02)
+                disallow (compile $ RST 0x02)
             it "disallows adding AF to HL" $ do
-                disallow (show $ ADDHLrr AF)
+                disallow (compile $ ADDHLrr AF)
             it "disallows adding PC to HL" $ do
-                disallow (show $ ADDHLrr PC)
+                disallow (compile $ ADDHLrr PC)
             it "disallows incrementing AF" $ do
-                disallow (show $ INCrr AF)
+                disallow (compile $ INCrr AF)
             it "disallows incrementing PC" $ do
-                disallow (show $ INCrr PC)
+                disallow (compile $ INCrr PC)
             it "disallows decrementing AF" $ do
-                disallow (show $ DECrr AF)
+                disallow (compile $ DECrr AF)
             it "disallows decrementing PC" $ do
-                disallow (show $ DECrr PC)
+                disallow (compile $ DECrr PC)
             it "enforces only 3-bit values can be passed to BIT instructions" $ do
-                disallow (show $ BITnr 0x80 A)
+                disallow (compile $ BITnr 0x80 A)
             it "formats embedded byte sequences correctly" $ do
-                let program = map show $ execLazyboy $ tell [BYTES [97, 98]]
-                program `shouldBe` ["db $61,$62" ]
+                let program = runExcept $ mapM compile $ execLazyboy $ tell [BYTES [97, 98]]
+                program `shouldBe` Right ["db $61,$62" ]
             it "formats all other instructions correctly" $ do
-                show (LDrr A B) `shouldBe` "ld A, B"
-                show (LDrn C 5) `shouldBe` "ld C, 5"
-                show (LDrHL A) `shouldBe` "ld A, [HL]"
-                show (LDHLr B) `shouldBe` "ld [HL], B"
-                show (LDHLn 1) `shouldBe` "ld [HL], 1"
-                show (LDArr BC) `shouldBe` "ld A, [BC]"
-                show (LDArr DE) `shouldBe` "ld A, [DE]"
-                show (LDArr HL) `shouldBe` "ld A, [HL]"
-                show (LDrrA BC) `shouldBe` "ld [BC], A"
-                show (LDrrA DE) `shouldBe` "ld [DE], A"
-                show (LDrrA HL) `shouldBe` "ld [HL], A"
-                show (LDAnn (Address 55)) `shouldBe` "ld A, [$37]" 
-                show (LDnnA (Address 55)) `shouldBe` "ld [$37], A"
-                show (LDAIO 0) `shouldBe` "ldh A, [$FF00+$0]"
-                show (LDIOA 1) `shouldBe` "ldh [$FF00+$1], A"
-                show (LDAIOC) `shouldBe` "ldh A, [$FF00+C]"
-                show (LDIOCA) `shouldBe` "ldh [$FF00+C], A"
-                show (LDHLAI) `shouldBe` "ld [HL+], A"
-                show (LDAHLI) `shouldBe` "ld A, [HL+]"
-                show (LDrrnn BC (Address 7)) `shouldBe` "ld BC, $7"
-                show (LDSPHL) `shouldBe` "ld SP, HL"
-                show (PUSH BC) `shouldBe` "PUSH BC"
-                show (POP HL) `shouldBe` "POP HL"
-                show (JP (Address 43)) `shouldBe` "jp $2B"
-                show (JP (Name (Global 1))) `shouldBe` "jp L1"
-                show (JP (Name (Local 40))) `shouldBe` "jr .L40"
-                show (JPHL) `shouldBe` "jp HL"
-                show (JPif Zero (Address 100)) `shouldBe` "jp z, $64"
-                show (JPif NoCarry (Name (Global 20))) `shouldBe` "jp nc, L20"
-                show (JPif NonZero (Name (Local 4))) `shouldBe` "jr nz, .L4"
-                show (CALL (Address 50)) `shouldBe` "call $32"
-                show (CALLif Zero (Address 50)) `shouldBe` "call z, $32"
-                show (RET) `shouldBe` "ret"
-                show (RETif NonZero) `shouldBe` "ret nz"
-                show (RETi) `shouldBe` "reti"
-                show (ADDAr C) `shouldBe` "add A, C"
-                show (ADDAn 25) `shouldBe` "add A, 25"
-                show (ADDHL) `shouldBe` "add A, [HL]"
-                show (ADCAr L) `shouldBe` "adc A, L"
-                show (ADCAn 4) `shouldBe` "adc A, 4"
-                show (ADCHL) `shouldBe` "adc A, [HL]"
-                show (SUBAr A) `shouldBe` "sub A, A"
-                show (SUBAn 9) `shouldBe` "sub A, 9"
-                show (SUBHL) `shouldBe` "sub A, [HL]"
-                show (SBCAr B) `shouldBe` "sbc A, B"
-                show (SBCAn 3) `shouldBe` "sbc A, 3"
-                show (SBCAHL) `shouldBe` "sbc A, [HL]"
-                show (ANDr C) `shouldBe` "and A, C"
-                show (ANDn 1) `shouldBe` "and A, 1"
-                show (ANDHL) `shouldBe` "and A, [HL]"
-                show (XORr A) `shouldBe` "xor A, A"
-                show (XORn 1) `shouldBe` "xor A, 1"
-                show (XORHL) `shouldBe` "xor A, [HL]"
-                show (ORr C) `shouldBe` "or A, C"
-                show (ORn 10) `shouldBe` "or A, 10"
-                show (ORHL) `shouldBe` "or A, [HL]"
-                show (CPr B) `shouldBe` "cp A, B"
-                show (CPn 9) `shouldBe` "cp A, 9"
-                show (CPHL) `shouldBe` "cp A, [HL]"
-                show (INCr A) `shouldBe` "inc A" 
-                show (INCHL) `shouldBe` "inc [HL]"
-                show (DECr C) `shouldBe` "dec C"
-                show (DECHL) `shouldBe` "dec [HL]"
-                show (DAA) `shouldBe` "daa"
-                show (CPL) `shouldBe` "cpl"
-                show (ADDHLrr BC) `shouldBe` "add HL, BC"
-                show (ADDHLrr DE) `shouldBe` "add HL, DE"
-                show (ADDHLrr HL) `shouldBe` "add HL, HL"
-                show (ADDHLrr SP) `shouldBe` "add HL, SP"
-                show (INCrr BC) `shouldBe` "inc BC"
-                show (INCrr DE) `shouldBe` "inc DE"
-                show (INCrr HL) `shouldBe` "inc HL"
-                show (INCrr SP) `shouldBe` "inc SP"
-                show (DECrr BC) `shouldBe` "dec BC"
-                show (DECrr DE) `shouldBe` "dec DE"
-                show (DECrr HL) `shouldBe` "dec HL"
-                show (DECrr SP) `shouldBe` "dec SP"
-                show (RLCA) `shouldBe` "rlca"
-                show (RLA) `shouldBe` "rla"
-                show (RRCA) `shouldBe` "rrca"
-                show (RRA) `shouldBe` "rra"
-                show (RLC A) `shouldBe` "rlc A"
-                show (RLCHL) `shouldBe` "rlc [HL]"
-                show (RL C) `shouldBe` "rl C"
-                show (RLHL) `shouldBe` "rl [HL]"
-                show (RRC A) `shouldBe` "rrc A"
-                show (RRCHL) `shouldBe` "rrc [HL]"
-                show (RR B) `shouldBe` "rr B"
-                show (RRHL) `shouldBe` "rr [HL]"
-                show (SLA B) `shouldBe` "sla B"
-                show (SLAHL) `shouldBe` "sla [HL]"
-                show (SWAP B) `shouldBe` "swap B"
-                show (SWAPHL) `shouldBe` "swap [HL]"
-                show (SRA B) `shouldBe` "sra B"
-                show (SRAHL) `shouldBe` "sra [HL]"
-                show (SRL B) `shouldBe` "srl B"
-                show (SRLHL) `shouldBe` "srl [HL]"
-                show (CCF) `shouldBe` "ccf"
-                show (SCF) `shouldBe` "scf"
-                show (NOP) `shouldBe` "nop"
-                show (HALT) `shouldBe` "halt"
-                show (STOP) `shouldBe` "stop"
-                show (DI) `shouldBe` "di"
-                show (EI) `shouldBe` "ei"
+                (runExcept $ compile (LDrr A B)) `shouldBe` Right "ld A, B"
+                (runExcept $ compile (LDrn C 5)) `shouldBe` Right "ld C, 5"
+                (runExcept $ compile (LDrHL A)) `shouldBe` Right "ld A, [HL]"
+                (runExcept $ compile (LDHLr B)) `shouldBe` Right "ld [HL], B"
+                (runExcept $ compile (LDHLn 1)) `shouldBe` Right "ld [HL], 1"
+                (runExcept $ compile (LDArr BC)) `shouldBe` Right "ld A, [BC]"
+                (runExcept $ compile (LDArr DE)) `shouldBe` Right "ld A, [DE]"
+                (runExcept $ compile (LDArr HL)) `shouldBe` Right "ld A, [HL]"
+                (runExcept $ compile (LDrrA BC)) `shouldBe` Right "ld [BC], A"
+                (runExcept $ compile (LDrrA DE)) `shouldBe` Right "ld [DE], A"
+                (runExcept $ compile (LDrrA HL)) `shouldBe` Right "ld [HL], A"
+                (runExcept $ compile (LDAnn (Address 55))) `shouldBe` Right "ld A, [$37]" 
+                (runExcept $ compile (LDnnA (Address 55))) `shouldBe` Right "ld [$37], A"
+                (runExcept $ compile (LDAIO 0)) `shouldBe` Right "ldh A, [$FF00+$0]"
+                (runExcept $ compile (LDIOA 1)) `shouldBe` Right "ldh [$FF00+$1], A"
+                (runExcept $ compile (LDAIOC)) `shouldBe` Right "ldh A, [$FF00+C]"
+                (runExcept $ compile (LDIOCA)) `shouldBe` Right "ldh [$FF00+C], A"
+                (runExcept $ compile (LDHLAI)) `shouldBe` Right "ld [HL+], A"
+                (runExcept $ compile (LDAHLI)) `shouldBe` Right "ld A, [HL+]"
+                (runExcept $ compile (LDrrnn BC (Address 7))) `shouldBe` Right "ld BC, $7"
+                (runExcept $ compile (LDSPHL)) `shouldBe` Right "ld SP, HL"
+                (runExcept $ compile (PUSH BC)) `shouldBe` Right "PUSH BC"
+                (runExcept $ compile (POP HL)) `shouldBe` Right "POP HL"
+                (runExcept $ compile (JP (Address 43))) `shouldBe` Right "jp $2b"
+                (runExcept $ compile (JP (Name (Global 1)))) `shouldBe` Right "jp L1"
+                (runExcept $ compile (JP (Name (Local 40)))) `shouldBe` Right "jr .L40"
+                (runExcept $ compile (JPHL)) `shouldBe` Right "jp HL"
+                (runExcept $ compile (JPif Zero (Address 100))) `shouldBe` Right "jp z, $64"
+                (runExcept $ compile (JPif NoCarry (Name (Global 20)))) `shouldBe` Right "jp nc, L20"
+                (runExcept $ compile (JPif NonZero (Name (Local 4)))) `shouldBe` Right "jr nz, .L4"
+                (runExcept $ compile (CALL (Address 50))) `shouldBe` Right "call $32"
+                (runExcept $ compile (CALLif Zero (Address 50))) `shouldBe` Right "call z, $32"
+                (runExcept $ compile (RET)) `shouldBe` Right "ret"
+                (runExcept $ compile (RETif NonZero)) `shouldBe` Right "ret nz"
+                (runExcept $ compile (RETi)) `shouldBe` Right "reti"
+                (runExcept $ compile (ADDAr C)) `shouldBe` Right "add A, C"
+                (runExcept $ compile (ADDAn 25)) `shouldBe` Right "add A, 25"
+                (runExcept $ compile (ADDHL)) `shouldBe` Right "add A, [HL]"
+                (runExcept $ compile (ADCAr L)) `shouldBe` Right "adc A, L"
+                (runExcept $ compile (ADCAn 4)) `shouldBe` Right "adc A, 4"
+                (runExcept $ compile (ADCHL)) `shouldBe` Right "adc A, [HL]"
+                (runExcept $ compile (SUBAr A)) `shouldBe` Right "sub A, A"
+                (runExcept $ compile (SUBAn 9)) `shouldBe` Right "sub A, 9"
+                (runExcept $ compile (SUBHL)) `shouldBe` Right "sub A, [HL]"
+                (runExcept $ compile (SBCAr B)) `shouldBe` Right "sbc A, B"
+                (runExcept $ compile (SBCAn 3)) `shouldBe` Right "sbc A, 3"
+                (runExcept $ compile (SBCAHL)) `shouldBe` Right "sbc A, [HL]"
+                (runExcept $ compile (ANDr C)) `shouldBe` Right "and A, C"
+                (runExcept $ compile (ANDn 1)) `shouldBe` Right "and A, 1"
+                (runExcept $ compile (ANDHL)) `shouldBe` Right "and A, [HL]"
+                (runExcept $ compile (XORr A)) `shouldBe` Right "xor A, A"
+                (runExcept $ compile (XORn 1)) `shouldBe` Right "xor A, 1"
+                (runExcept $ compile (XORHL)) `shouldBe` Right "xor A, [HL]"
+                (runExcept $ compile (ORr C)) `shouldBe` Right "or A, C"
+                (runExcept $ compile (ORn 10)) `shouldBe` Right "or A, 10"
+                (runExcept $ compile (ORHL)) `shouldBe` Right "or A, [HL]"
+                (runExcept $ compile (CPr B)) `shouldBe` Right "cp A, B"
+                (runExcept $ compile (CPn 9)) `shouldBe` Right "cp A, 9"
+                (runExcept $ compile (CPHL)) `shouldBe` Right "cp A, [HL]"
+                (runExcept $ compile (INCr A)) `shouldBe` Right "inc A" 
+                (runExcept $ compile (INCHL)) `shouldBe` Right "inc [HL]"
+                (runExcept $ compile (DECr C)) `shouldBe` Right "dec C"
+                (runExcept $ compile (DECHL)) `shouldBe` Right "dec [HL]"
+                (runExcept $ compile (DAA)) `shouldBe` Right "daa"
+                (runExcept $ compile (CPL)) `shouldBe` Right "cpl"
+                (runExcept $ compile (ADDHLrr BC)) `shouldBe` Right "add HL, BC"
+                (runExcept $ compile (ADDHLrr DE)) `shouldBe` Right "add HL, DE"
+                (runExcept $ compile (ADDHLrr HL)) `shouldBe` Right "add HL, HL"
+                (runExcept $ compile (ADDHLrr SP)) `shouldBe` Right "add HL, SP"
+                (runExcept $ compile (INCrr BC)) `shouldBe` Right "inc BC"
+                (runExcept $ compile (INCrr DE)) `shouldBe` Right "inc DE"
+                (runExcept $ compile (INCrr HL)) `shouldBe` Right "inc HL"
+                (runExcept $ compile (INCrr SP)) `shouldBe` Right "inc SP"
+                (runExcept $ compile (DECrr BC)) `shouldBe` Right "dec BC"
+                (runExcept $ compile (DECrr DE)) `shouldBe` Right "dec DE"
+                (runExcept $ compile (DECrr HL)) `shouldBe` Right "dec HL"
+                (runExcept $ compile (DECrr SP)) `shouldBe` Right "dec SP"
+                (runExcept $ compile (RLCA)) `shouldBe` Right "rlca"
+                (runExcept $ compile (RLA)) `shouldBe` Right "rla"
+                (runExcept $ compile (RRCA)) `shouldBe` Right "rrca"
+                (runExcept $ compile (RRA)) `shouldBe` Right "rra"
+                (runExcept $ compile (RLC A)) `shouldBe` Right "rlc A"
+                (runExcept $ compile (RLCHL)) `shouldBe` Right "rlc [HL]"
+                (runExcept $ compile (RL C)) `shouldBe` Right "rl C"
+                (runExcept $ compile (RLHL)) `shouldBe` Right "rl [HL]"
+                (runExcept $ compile (RRC A)) `shouldBe` Right "rrc A"
+                (runExcept $ compile (RRCHL)) `shouldBe` Right "rrc [HL]"
+                (runExcept $ compile (RR B)) `shouldBe` Right "rr B"
+                (runExcept $ compile (RRHL)) `shouldBe` Right "rr [HL]"
+                (runExcept $ compile (SLA B)) `shouldBe` Right "sla B"
+                (runExcept $ compile (SLAHL)) `shouldBe` Right "sla [HL]"
+                (runExcept $ compile (SWAP B)) `shouldBe` Right "swap B"
+                (runExcept $ compile (SWAPHL)) `shouldBe` Right "swap [HL]"
+                (runExcept $ compile (SRA B)) `shouldBe` Right "sra B"
+                (runExcept $ compile (SRAHL)) `shouldBe` Right "sra [HL]"
+                (runExcept $ compile (SRL B)) `shouldBe` Right "srl B"
+                (runExcept $ compile (SRLHL)) `shouldBe` Right "srl [HL]"
+                (runExcept $ compile (CCF)) `shouldBe` Right "ccf"
+                (runExcept $ compile (SCF)) `shouldBe` Right "scf"
+                (runExcept $ compile (NOP)) `shouldBe` Right "nop"
+                (runExcept $ compile (HALT)) `shouldBe` Right "halt"
+                (runExcept $ compile (STOP)) `shouldBe` Right "stop"
+                (runExcept $ compile (DI)) `shouldBe` Right "di"
+                (runExcept $ compile (EI)) `shouldBe` Right "ei"
 
-                -- these throw
-                disallow $ show $ LDArr AF
-                disallow $ show $ LDrrA AF
-                disallow $ show $ LDrrnn AF $ Address 0
-                disallow $ show $ LDrrnn PC $ Name $ Local 1
-                disallow $ show $ PUSH SP
-                disallow $ show $ PUSH PC
-                disallow $ show $ POP SP
-                disallow $ show $ POP PC
-                disallow $ show $ ADDHLrr AF
-                disallow $ show $ INCrr AF
-                disallow $ show $ DECrr AF
+                -- these fail
+                disallow $ compile $ LDArr AF
+                disallow $ compile $ LDrrA AF
+                disallow $ compile $ LDrrnn AF $ Address 0
+                disallow $ compile $ LDrrnn PC $ Name $ Local 1
+                disallow $ compile $ PUSH SP
+                disallow $ compile $ PUSH PC
+                disallow $ compile $ POP SP
+                disallow $ compile $ POP PC
+                disallow $ compile $ ADDHLrr AF
+                disallow $ compile $ INCrr AF
+                disallow $ compile $ DECrr AF
 
     describe "Lazyboy.Constants" $ do
         it "has valid constants" $ do

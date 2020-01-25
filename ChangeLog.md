@@ -1,5 +1,9 @@
 # Changelog for Lazyboy
 
+# 0.3.0.0
+- Removed use of printf / partial functions.
+- Error handling is now done with the Except monad.
+	
 # 0.2.2.1
 - Added `while` to `Lazyboy.Control` and added a test case.
 

@@ -12,20 +12,25 @@
 -}
 
 {-# LANGUAGE OverloadedStrings #-}
+
 module Lazyboy.Target.ASM where
 
-import Control.Exception
-import Data.List         (intercalate)
-import Data.Text         (Text)
-import Data.Word
-import Lazyboy.Templates (basic, templatize)
+import Control.Monad.Trans.Except (Except, throwE, runExcept)
+import Data.Text                  (Text)
+import Data.Word                  (Word8)
+import Formatting                 (sformat, formatToString, (%))
+import Formatting.ShortFormatters (sh, x, d)
+import Lazyboy.Templates          (basic, templatize)
 import Lazyboy.Types
-import Text.Printf
 
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 
--- | Lazyboy exception type.
-data LazyboyException =
+class Compile a where
+  compile :: a -> Except CompileError Text
+
+-- | Compilation errors.
+data CompileError =
     InvalidStackOperation
   | InvalidALoad Register16
   | AttemptedAFPCLoad
@@ -34,218 +39,198 @@ data LazyboyException =
   | IllegalModification Register16
   | IntegerBoundsViolation Word8
   | Unimplemented
+  deriving (Eq)
 
--- | An instance of Show for printing exception messages.
-instance Show LazyboyException where
-    show InvalidStackOperation  = printf "You cannot push or pop the program counter or stack pointer onto/from the stack."
-    show (InvalidALoad r) =  printf "You cannot perform loads between the 16 bit register '%s' and A." r
-    show AttemptedAFPCLoad = printf "You cannot load a 16 bit value directly into AF or the program counter."
+-- | An instance of Show for printing compiler errors.
+instance Show CompileError where
+    show InvalidStackOperation = "You cannot push or pop the program counter or stack pointer onto/from the stack."
+    show (InvalidALoad r) = formatToString ("You cannot perform loads between the 16 bit register '" % sh % "' and A.") r
+    show AttemptedAFPCLoad = "You cannot load a 16 bit value directly into AF or the program counter."
     show InvalidRSTVector = "Invalid RST vector specified!"
     show IllegalHLAddition = "Cannot add the given the 16 bit register to HL."
-    show (IllegalModification r) = printf "Cannot increment or decrement the given 16 bit register '%s'." r
-    show (IntegerBoundsViolation v) = printf "Value '%d' given to an instruction expecting a 3-bit value." v
+    show (IllegalModification r) = formatToString ("Cannot increment or decrement the given 16 bit register '" % sh % "'.") r
+    show (IntegerBoundsViolation v) = formatToString ("Value '" % x % "' given to an instruction expecting a 3-bit value.") v
     show Unimplemented = "Use of an unimplemented instruction."
 
--- | An instance of Exception itself for LazyboyException.
-instance Exception LazyboyException where
-
 -- | A custom Show instance which formats Instructions as assembly.
-instance Show Instruction where
-    show (LDrr r1 r2) = printf "ld %s, %s" r1 r2
-    show (LDrn r1 v1) = printf "ld %s, %d" r1 v1
-    show (LDrHL r1)   = printf "ld %s, [HL]" r1
-    show (LDHLr r1)   = printf "ld [HL], %s" r1
-    show (LDHLn v1)   = printf "ld [HL], %d" v1
-    show (LDArr BC)   = printf "ld A, [BC]"
-    show (LDArr DE)   = printf "ld A, [DE]"
-    show (LDArr HL)   = printf "ld A, [HL]"
-    show (LDArr r1)   = throw $ InvalidALoad r1
-    show (LDrrA BC)   = printf "ld [BC], A"
-    show (LDrrA DE)   = printf "ld [DE], A"
-    show (LDrrA HL)   = printf "ld [HL], A"
-    show (LDrrA r1)   = throw $ InvalidALoad r1
-    show (LDAnn v1)   = printf "ld A, [%s]" v1
-    show (LDnnA v1)   = printf "ld [%s], A" v1
-    show (LDAIO v1)   = printf "ldh A, [$FF00+$%X]" v1
-    show (LDIOA v1)   = printf "ldh [$FF00+$%X], A" v1
-    show LDAIOC       = printf "ldh A, [$FF00+C]"
-    show LDIOCA       = printf "ldh [$FF00+C], A"
-    show LDHLAI       = printf "ld [HL+], A"
-    show LDAHLI       = printf "ld A, [HL+]"
+instance Compile Instruction where
+    compile (LDrr r1 r2) = pure $ sformat ("ld " % sh % ", " % sh) r1 r2
+    compile (LDrn r1 v1) = pure $ sformat ("ld " % sh % ", " % d) r1 v1
+    compile (LDrHL r1)   = pure $ sformat ("ld " % sh % ", [HL]") r1
+    compile (LDHLr r1)   = pure $ sformat ("ld [HL], " % sh) r1
+    compile (LDHLn v1)   = pure $ sformat ("ld [HL], " % d) v1
+    compile (LDArr BC)   = pure "ld A, [BC]"
+    compile (LDArr DE)   = pure "ld A, [DE]"
+    compile (LDArr HL)   = pure "ld A, [HL]"
+    compile (LDArr r1)   = throwE $ InvalidALoad r1
+    compile (LDrrA BC)   = pure "ld [BC], A"
+    compile (LDrrA DE)   = pure "ld [DE], A"
+    compile (LDrrA HL)   = pure "ld [HL], A"
+    compile (LDrrA r1)   = throwE $ InvalidALoad r1
+    compile (LDAnn v1)   = pure $ sformat ("ld A, [" % sh % "]") v1
+    compile (LDnnA v1)   = pure $ sformat ("ld [" % sh % "], A") v1
+    compile (LDAIO v1)   = pure $ sformat ("ldh A, [$FF00+$" % x % "]") v1
+    compile (LDIOA v1)   = pure $ sformat ("ldh [$FF00+$" % x % "], A") v1
+    compile LDAIOC       = pure "ldh A, [$FF00+C]"
+    compile LDIOCA       = pure "ldh [$FF00+C], A"
+    compile LDHLAI       = pure "ld [HL+], A"
+    compile LDAHLI       = pure "ld A, [HL+]"
 
     -- handle some special cases for ld rr,nn
-    show (LDrrnn AF _) = throw AttemptedAFPCLoad
-    show (LDrrnn PC _) = throw AttemptedAFPCLoad
-    show (LDrrnn r1 v1)  = printf "ld %s, %s" r1 v1
+    compile (LDrrnn AF _) = throwE AttemptedAFPCLoad
+    compile (LDrrnn PC _) = throwE AttemptedAFPCLoad
+    compile (LDrrnn r1 v1)  = pure $ sformat ("ld " % sh % ", " % sh) r1 v1
 
-    show LDSPHL = printf "ld SP, HL"
+    compile LDSPHL = pure "ld SP, HL"
 
     -- stack manipulation
-    show (PUSH SP) = throw InvalidStackOperation
-    show (PUSH PC) = throw InvalidStackOperation
-    show (PUSH r1) = printf "PUSH %s" r1
+    compile (PUSH SP) = throwE InvalidStackOperation
+    compile (PUSH PC) = throwE InvalidStackOperation
+    compile (PUSH r1) = pure $ sformat ("PUSH " % sh) r1
 
-    show (POP SP) = throw InvalidStackOperation
-    show (POP PC) = throw InvalidStackOperation
-    show (POP r1) = printf "POP %s" r1
+    compile (POP SP) = throwE InvalidStackOperation
+    compile (POP PC) = throwE InvalidStackOperation
+    compile (POP r1) = pure $ sformat ("POP " % sh) r1
 
     -- jumps
-    show (JP v1@(Address _)) = printf "jp %s" v1
-    show (JP v1@(Name (Global _))) = printf "jp %s" v1
-    show (JP v1@(Name (Local _))) = printf "jr %s" v1
-    show JPHL = printf "jp HL"
-    show (JPif c v1@(Address _)) = printf "jp %s, %s" c v1
-    show (JPif c v1@(Name (Global _))) = printf "jp %s, %s" c v1
-    show (JPif c v1@(Name (Local _))) = printf "jr %s, %s" c v1
+    compile (JP v1@(Address _)) = pure $ sformat ("jp " % sh) v1
+    compile (JP v1@(Name (Global _))) = pure $ sformat ("jp " % sh) v1
+    compile (JP v1@(Name (Local _))) = pure $ sformat ("jr " % sh) v1
+    compile JPHL = pure "jp HL"
+    compile (JPif c v1@(Address _)) = pure $ sformat ("jp " % sh % ", " % sh) c v1
+    compile (JPif c v1@(Name (Global _))) = pure $ sformat ("jp " % sh % ", " % sh) c v1
+    compile (JPif c v1@(Name (Local _))) = pure $ sformat ("jr " % sh % ", " % sh) c v1
 
     -- call and return
-    show (CALL v1) = printf "call %s" v1
-    show (CALLif c v1) = printf "call %s, %s" c v1
-    show RET = printf "ret"
-    show (RETif c) = printf "ret %s" c
-    show RETi = printf "reti"
+    compile (CALL v1) = pure $ sformat ("call " % sh) v1
+    compile (CALLif c v1) = pure $ sformat ("call " % sh % ", " % sh) c v1
+    compile RET = pure "ret"
+    compile (RETif c) = pure $ sformat ("ret " % sh) c
+    compile RETi = pure "reti"
 
-    show (RST 0x00) = printf "RST $00"
-    show (RST 0x08) = printf "RST $08"
-    show (RST 0x10) = printf "RST $10"
-    show (RST 0x18) = printf "RST $18"
-    show (RST 0x20) = printf "RST $20"
-    show (RST 0x28) = printf "RST $28"
-    show (RST 0x30) = printf "RST $30"
-    show (RST 0x38) = printf "RST $38"
-    show (RST _) = throw InvalidRSTVector
+    compile (RST 0x00) = pure "RST $00"
+    compile (RST 0x08) = pure "RST $08"
+    compile (RST 0x10) = pure "RST $10"
+    compile (RST 0x18) = pure "RST $18"
+    compile (RST 0x20) = pure "RST $20"
+    compile (RST 0x28) = pure "RST $28"
+    compile (RST 0x30) = pure "RST $30"
+    compile (RST 0x38) = pure "RST $38"
+    compile (RST _) = throwE InvalidRSTVector
 
     -- arithmetic and comparisons
-    show (ADDAr r1) = printf "add A, %s" r1
-    show (ADDAn v) = printf "add A, %d" v
-    show ADDHL = printf "add A, [HL]"
-    show (ADCAr r1) = printf "adc A, %s" r1
-    show (ADCAn v) = printf "adc A, %d" v
-    show ADCHL = printf "adc A, [HL]"
-    show (SUBAr r1) = printf "sub A, %s" r1
-    show (SUBAn v) = printf "sub A, %d" v
-    show SUBHL = printf "sub A, [HL]"
-    show (SBCAr r1) = printf "sbc A, %s" r1
-    show (SBCAn v) = printf "sbc A, %d" v
-    show SBCAHL = printf "sbc A, [HL]"
+    compile (ADDAr r1) = pure $ sformat ("add A, " % sh) r1
+    compile (ADDAn v) = pure $ sformat ("add A, " % d) v
+    compile ADDHL = pure "add A, [HL]"
+    compile (ADCAr r1) = pure $ sformat ("adc A, " % sh) r1
+    compile (ADCAn v) = pure $ sformat ("adc A, " % d) v
+    compile ADCHL = pure  "adc A, [HL]"
+    compile (SUBAr r1) = pure $ sformat ("sub A, " % sh) r1
+    compile (SUBAn v) = pure $ sformat ("sub A, " % d) v
+    compile SUBHL = pure "sub A, [HL]"
+    compile (SBCAr r1) = pure $ sformat ("sbc A, " % sh) r1
+    compile (SBCAn v) = pure $ sformat ("sbc A, " % d) v
+    compile SBCAHL = pure "sbc A, [HL]"
 
-    show (ANDr r1) = printf "and A, %s" r1
-    show (ANDn v) = printf "and A, %d" v
-    show ANDHL = printf "and A, [HL]"
-    show (XORr r1) = printf "xor A, %s" r1
-    show (XORn v) = printf "xor A, %d" v
-    show XORHL = printf "xor A, [HL]"
-    show (ORr r1) = printf "or A, %s" r1
-    show (ORn v) = printf "or A, %d" v
-    show ORHL = printf "or A, [HL]"
-    show (CPr r1) = printf "cp A, %s" r1
-    show (CPn v) = printf "cp A, %d" v
-    show CPHL = printf "cp A, [HL]"
-    show (INCr r1) = printf "inc %s" r1
-    show INCHL = printf "inc [HL]"
-    show (DECr r1) = printf "dec %s" r1
-    show DECHL = printf "dec [HL]"
-    show DAA = printf "daa"
-    show CPL = printf "cpl"
-    show (ADDHLrr BC) = printf "add HL, BC"
-    show (ADDHLrr DE) = printf "add HL, DE"
-    show (ADDHLrr HL) = printf "add HL, HL"
-    show (ADDHLrr SP) = printf "add HL, SP"
-    show (ADDHLrr _) = throw IllegalHLAddition
-    show (INCrr BC) = printf "inc BC"
-    show (INCrr DE) = printf "inc DE"
-    show (INCrr HL) = printf "inc HL"
-    show (INCrr SP) = printf "inc SP"
-    show (INCrr r1) = throw $ IllegalModification r1
-    show (DECrr BC) = printf "dec BC"
-    show (DECrr DE) = printf "dec DE"
-    show (DECrr HL) = printf "dec HL"
-    show (DECrr SP) = printf "dec SP"
-    show (DECrr r1) = throw $ IllegalModification r1
+    compile (ANDr r1) = pure $ sformat ("and A, " % sh) r1
+    compile (ANDn v) = pure $ sformat ("and A, " % d) v
+    compile ANDHL = pure "and A, [HL]"
+    compile (XORr r1) = pure $ sformat ("xor A, " % sh) r1
+    compile (XORn v) = pure $ sformat ("xor A, " % d) v
+    compile XORHL = pure "xor A, [HL]"
+    compile (ORr r1) = pure $ sformat ("or A, " % sh) r1
+    compile (ORn v) = pure $ sformat ("or A, " % d) v
+    compile ORHL = pure "or A, [HL]"
+    compile (CPr r1) = pure $ sformat ("cp A, " % sh) r1
+    compile (CPn v) = pure $ sformat ("cp A, " % d) v
+    compile CPHL = pure "cp A, [HL]"
+    compile (INCr r1) = pure $ sformat ("inc " % sh) r1
+    compile INCHL = pure "inc [HL]"
+    compile (DECr r1) = pure $ sformat ("dec " % sh) r1
+    compile DECHL = pure "dec [HL]"
+    compile DAA = pure "daa"
+    compile CPL = pure "cpl"
+    compile (ADDHLrr BC) = pure "add HL, BC"
+    compile (ADDHLrr DE) = pure "add HL, DE"
+    compile (ADDHLrr HL) = pure "add HL, HL"
+    compile (ADDHLrr SP) = pure "add HL, SP"
+    compile (ADDHLrr _) = throwE IllegalHLAddition
+    compile (INCrr BC) = pure "inc BC"
+    compile (INCrr DE) = pure "inc DE"
+    compile (INCrr HL) = pure "inc HL"
+    compile (INCrr SP) = pure "inc SP"
+    compile (INCrr r1) = throwE $ IllegalModification r1
+    compile (DECrr BC) = pure "dec BC"
+    compile (DECrr DE) = pure "dec DE"
+    compile (DECrr HL) = pure "dec HL"
+    compile (DECrr SP) = pure "dec SP"
+    compile (DECrr r1) = throwE $ IllegalModification r1
 
     -- Rotate & shift
-    show RLCA = printf "rlca"
-    show RLA = printf "rla"
-    show RRCA = printf "rrca"
-    show RRA = printf "rra"
-    show (RLC r1) = printf "rlc %s" r1
-    show RLCHL = printf "rlc [HL]"
-    show (RL r1) = printf "rl %s" r1
-    show RLHL = printf "rl [HL]"
-    show (RRC r1) = printf "rrc %s" r1
-    show RRCHL = printf "rrc [HL]"
-    show (RR r1) = printf "rr %s" r1
-    show RRHL = printf "rr [HL]"
-    show (SLA r1) = printf "sla %s" r1
-    show SLAHL = printf "sla [HL]"
-    show (SWAP r1) = printf "swap %s" r1
-    show SWAPHL = printf "swap [HL]"
-    show (SRA r1) = printf "sra %s" r1
-    show SRAHL = printf "sra [HL]"
-    show (SRL r1) = printf "srl %s" r1
-    show SRLHL = printf "srl [HL]"
+    compile RLCA = pure "rlca"
+    compile RLA = pure "rla"
+    compile RRCA = pure "rrca"
+    compile RRA = pure "rra"
+    compile (RLC r1) = pure $ sformat ("rlc " % sh) r1
+    compile RLCHL = pure "rlc [HL]"
+    compile (RL r1) = pure $ sformat ("rl " % sh) r1
+    compile RLHL = pure "rl [HL]"
+    compile (RRC r1) = pure $ sformat ("rrc " % sh) r1
+    compile RRCHL = pure "rrc [HL]"
+    compile (RR r1) = pure $ sformat ("rr " % sh) r1
+    compile RRHL = pure "rr [HL]"
+    compile (SLA r1) = pure $ sformat ("sla " % sh) r1
+    compile SLAHL = pure "sla [HL]"
+    compile (SWAP r1) = pure $ sformat ("swap " % sh) r1
+    compile SWAPHL = pure "swap [HL]"
+    compile (SRA r1) = pure $ sformat ("sra " % sh) r1
+    compile SRAHL = pure "sra [HL]"
+    compile (SRL r1) = pure $ sformat ("srl " % sh) r1
+    compile SRLHL = pure "srl [HL]"
 
     -- CPU control
-    show CCF = printf "ccf"
-    show SCF = printf "scf"
-    show NOP = printf "nop"
-    show HALT = printf "halt"
-    show STOP = printf "stop"
-    show DI = printf "di"
-    show EI = printf "ei"
+    compile CCF = pure "ccf"
+    compile SCF = pure "scf"
+    compile NOP = pure "nop"
+    compile HALT = pure "halt"
+    compile STOP = pure "stop"
+    compile DI = pure "di"
+    compile EI = pure "ei"
 
     -- Bit manipulation
-    show (BITnr v r1)
-        | v >= 0 && v <= 7 = printf "bit %d, %s" v r1
-        | otherwise        = throw $ IntegerBoundsViolation v
-    show (BITnHL v)
-        | v >= 0 && v <= 7 = printf "bit %d, HL" v
-        | otherwise        = throw $ IntegerBoundsViolation v
-    show (SETnr v r1)
-        | v >= 0 && v <= 7 = printf "set %d, %s" v r1
-        | otherwise        = throw $ IntegerBoundsViolation v
-    show (SETnHL v)
-        | v >= 0 && v <= 7 = printf "set %d, HL" v
-        | otherwise        = throw $ IntegerBoundsViolation v
-    show (RESnr v r1)
-        | v >= 0 && v <= 7 = printf "res %d, %s" v r1
-        | otherwise        = throw $ IntegerBoundsViolation v
-    show (RESnHL v)
-        | v >= 0 && v <= 7 = printf "res %d, HL" v
-        | otherwise        = throw $ IntegerBoundsViolation v
+    compile (BITnr v r1)
+        | v >= 0 && v <= 7 = pure $ sformat ("bit " % d % ", " % sh) v r1
+        | otherwise        = throwE $ IntegerBoundsViolation v
+    compile (BITnHL v)
+        | v >= 0 && v <= 7 = pure $ sformat ("bit " % d % ", HL") v
+        | otherwise        = throwE $ IntegerBoundsViolation v
+    compile (SETnr v r1)
+        | v >= 0 && v <= 7 = pure $ sformat ("set " % d % ", " % sh) v r1
+        | otherwise        = throwE $ IntegerBoundsViolation v
+    compile (SETnHL v)
+        | v >= 0 && v <= 7 = pure $ sformat ("set " % d % ", HL") v
+        | otherwise        = throwE $ IntegerBoundsViolation v
+    compile (RESnr v r1)
+        | v >= 0 && v <= 7 = pure $ sformat ("res " % d % ", " % sh) v r1
+        | otherwise        = throwE $ IntegerBoundsViolation v
+    compile (RESnHL v)
+        | v >= 0 && v <= 7 = pure $ sformat ("res " % d % ", HL") v
+        | otherwise        = throwE $ IntegerBoundsViolation v
 
     -- RGBASM specific stuff
-    show (LABEL l) = printf "%s:" l
-    show (INCLUDE file) = printf "INCBIN \"%s\"" file
-    show (BYTES bytes) = printf "db " ++ intercalate "," (map (printf "$%X") bytes)
+    compile (LABEL l) = pure $ sformat (sh % ":") l
+    compile (INCLUDE file) = pure $ sformat ("INCBIN \"" % sh % "\"") file
+    compile (BYTES bytes) = pure $ sformat "db " <> T.intercalate "," (map (sformat ("$" % x)) bytes)
 
-    show _            = throw Unimplemented
-
--- | Instances of PrintfArg
-instance PrintfArg Register16 where
-    formatArg = formatString . show
-
-instance PrintfArg Register8 where
-    formatArg = formatString . show
-
-instance PrintfArg Condition where
-    formatArg Zero    = formatString "z"
-    formatArg NonZero = formatString "nz"
-    formatArg Carry   = formatString "c"
-    formatArg NoCarry = formatString "nc"
-
-instance PrintfArg Label where
-    formatArg (Local v)  = formatString $ ".L" ++ show v
-    formatArg (Global v) = formatString $ "L" ++ show v
-
-instance PrintfArg Location where
-    formatArg (Address v)  = formatString (printf "$%X" v :: String)
-    formatArg (Name label) = formatString (printf "%s" label :: String)
+    compile _            = throwE Unimplemented
 
 -- | Compiles an action to an assembly source file.
 -- This function makes use of a "bare" template, which
 -- sets up an appropriate start location for the body of the program
 -- and defines an entry point label 'main'.
-compileROM :: Lazyboy a -> Text
-compileROM code = templatize basic body
-  where body = T.unlines $ map (T.pack . show) $ execLazyboy code
+compileROM :: Lazyboy a -> Except CompileError Text
+compileROM = fmap (templatize basic . T.unlines) . mapM compile . execLazyboy
+
+-- | Compile to a ROM, and print either the output assembly or the compile errors if any.
+lazyboy :: Lazyboy a -> IO ()
+lazyboy program = either print T.putStrLn $ runExcept $ compileROM program
