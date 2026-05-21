@@ -1,3 +1,16 @@
+***
+
+# Archival
+
+After a long period of inactivity, I've archived LazyBoy.
+
+I worked on this for a dissertation, and got it to a stage where it needed register allocation to evolve further, something that doesn't really feel worth the time investment.
+
+I have plans to make LazyBoy's approach redundant with an exciting new project - until then it's likely still usable to produce incredibly basic proof-of-concepts. You may also have luck with [Ivory](https://ivorylang.org/ivory-introduction.html).
+
+***
+
+
 ![LAZYBOY](meta/logo.png)
 [![Build Status](https://travis-ci.org/ix/lazyboy.svg?branch=master)](https://travis-ci.org/ix/lazyboy)
 [![Coverage Status](https://coveralls.io/repos/github/ix/lazyboy/badge.svg?branch=master)](https://coveralls.io/github/ix/lazyboy?branch=master)
